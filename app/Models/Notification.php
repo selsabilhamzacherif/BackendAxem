@@ -4,6 +4,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 
 class Notification extends Model
 {
@@ -44,7 +45,7 @@ class Notification extends Model
 
             return true;
         } catch (\Exception $e) {
-            \Log::error('Erreur envoi notification: ' . $e->getMessage());
+            Log::error('Erreur envoi notification: ' . $e->getMessage());
             return false;
         }
     }

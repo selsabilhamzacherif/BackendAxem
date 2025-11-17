@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Enseignant;
+use Illuminate\Support\Facades\Auth;
 
 class EnseignantController extends Controller
 {
@@ -100,8 +101,8 @@ class EnseignantController extends Controller
     }
     public function proposerCreneau(Request $request)
 {
-   // $enseignant = Auth::user(); // enseignant connecté
-   $enseignant=Enseignant::findOrFail($request->id_enseignant);
+    $enseignant = Auth::user(); // enseignant connecté
+   //$enseignant=Enseignant::findOrFail($request->id_enseignant);
 
     // Le front doit envoyer un tableau de 3 créneaux
     $creneaux = $request->input('creneaux');
@@ -112,16 +113,16 @@ class EnseignantController extends Controller
 }
 public function signalerContrainte(Request $request)
 {
-    //$enseignant = Auth::user();
-    $enseignant=Enseignant::findOrFail($request->id_enseignant);
+    $enseignant = Auth::user();
+    //$enseignant=Enseignant::findOrFail($request->id_enseignant);
     $contrainte = $enseignant->signalerContrainte($request->all());
 
     return response()->json(['message' => 'Contrainte signalée avec succès', 'contrainte' => $contrainte], 201);
 }
 public function consulterPlanning()
 {
-    //$enseignant = Auth::user();
-    $enseignant=Enseignant::findOrFail(request()->id_enseignant);
+    $enseignant = Auth::user();
+   // $enseignant=Enseignant::findOrFail(request()->id_enseignant);
     $planning = $enseignant->consulterPlanning();
 
     return response()->json(['planning' => $planning], 200);

@@ -4,6 +4,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
+
 
 class Examen extends Model
 {
@@ -131,7 +134,7 @@ class Examen extends Model
 
     public function modifier(array $data)
     {
-        \DB::beginTransaction();
+        DB::beginTransaction();
         try {
             // Mise à jour temporaire pour vérification
             $anciennesDonnees = $this->getAttributes();
@@ -141,7 +144,7 @@ class Examen extends Model
             $conflits = $this->detecterConflit();
 
             if (!empty($conflits)) {
-                \DB::rollBack();
+                DB::rollBack();
                 return [
                     'success' => false,
                     'conflits' => $conflits
@@ -154,14 +157,14 @@ class Examen extends Model
             // Notification des parties prenantes
             $this->notifierModification($anciennesDonnees);
 
-            \DB::commit();
+            DB::commit();
             return [
                 'success' => true,
                 'examen' => $this->fresh()
             ];
 
         } catch (\Exception $e) {
-            \DB::rollBack();
+            DB::rollBack();
             return [
                 'success' => false,
                 'error' => $e->getMessage()

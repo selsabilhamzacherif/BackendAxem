@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Etudiant;
+use Illuminate\Support\Facades\Auth;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class EtudiantController extends Controller
@@ -111,15 +112,15 @@ class EtudiantController extends Controller
 
     public function consulterExams()
 {
-    //$etudiant = Auth::user();
-     $etudiant=Etudiant::findOrFail(request()->id_etudiant);
+    $etudiant = Auth::user();
+     //$etudiant=Etudiant::findOrFail(request()->id_etudiant);
     return response()->json($etudiant->consulterExams());
 }
 
     public function telechargerPlanning()
 {
-    //$etudiant = Auth::user(); // étudiant connecté
-    $etudiant=Etudiant::findOrFail(request()->id_etudiant);
+    $etudiant = Auth::user(); // étudiant connecté
+    //$etudiant=Etudiant::findOrFail(request()->id_etudiant);
     $planning = $etudiant->telechargerPlanning();
 
     // On renvoie les données en JSON
@@ -128,8 +129,8 @@ class EtudiantController extends Controller
     ], 200);
 }
 public function consulterGroupe()
-{      //$etudiant = Auth::user();
-     $etudiant=Etudiant::findOrFail(request()->id_etudiant);
+{      $etudiant = Auth::user();
+     //$etudiant=Etudiant::findOrFail(request()->id_etudiant);
     return response()->json($etudiant->consulterGroupe());
 }
 
