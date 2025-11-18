@@ -1,5 +1,4 @@
 <?php
-
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ChefDepartementController;
@@ -13,66 +12,111 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ResponsablePlanificationController;
 use App\Http\Controllers\SalleController;
 use App\Http\Controllers\UtilisateurController;
+/**
+ * Utilisateurs
+ */
+Route::get('/utilisateurs', [UtilisateurController::class, 'index'])->name('utilisateurs.index');
+Route::post('/utilisateurs', [UtilisateurController::class, 'store'])->name('utilisateurs.store');
+Route::get('/utilisateurs/{id}', [UtilisateurController::class, 'show'])->name('utilisateurs.show');
+Route::put('/utilisateurs/{id}', [UtilisateurController::class, 'update'])->name('utilisateurs.update');
+Route::delete('/utilisateurs/{id}', [UtilisateurController::class, 'destroy'])->name('utilisateurs.destroy');
 
-/*
-|--------------------------------------------------------------------------
-| API Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider within a group which
-| is assigned the "api" middleware group. Enjoy building your API!
-|
-*/
+/**
+ * Groupes
+ */
+Route::get('/groupes', [GroupeController::class, 'index'])->name('groupes.index');
+Route::post('/groupes', [GroupeController::class, 'store'])->name('groupes.store');
+Route::get('/groupes/{id}', [GroupeController::class, 'show'])->name('groupes.show');
+Route::put('/groupes/{id}', [GroupeController::class, 'update'])->name('groupes.update');
+Route::delete('/groupes/{id}', [GroupeController::class, 'destroy'])->name('groupes.destroy');
 
-// Exemple de route pour l'utilisateur authentifié (optionnel, si vous utilisez l'authentification)
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
+/**
+ * Étudiants
+ */
+Route::get('/etudiants', [EtudiantController::class, 'index'])->name('etudiants.index');
+Route::post('/etudiants', [EtudiantController::class, 'store'])->name('etudiants.store');
+Route::get('/etudiants/{id}', [EtudiantController::class, 'show'])->name('etudiants.show');
+Route::put('/etudiants/{id}', [EtudiantController::class, 'update'])->name('etudiants.update');
+Route::delete('/etudiants/{id}', [EtudiantController::class, 'destroy'])->name('etudiants.destroy');
 
-// --------------------------------------------------------------------------
-// Routes pour la gestion  (CRUD basique)
-// --------------------------------------------------------------------------
+/**
+ * Enseignants
+ */
+Route::get('/enseignants', [EnseignantController::class, 'index'])->name('enseignants.index');
+Route::post('/enseignants', [EnseignantController::class, 'store'])->name('enseignants.store');
+Route::get('/enseignants/{id}', [EnseignantController::class, 'show'])->name('enseignants.show');
+Route::put('/enseignants/{id}', [EnseignantController::class, 'update'])->name('enseignants.update');
+Route::delete('/enseignants/{id}', [EnseignantController::class, 'destroy'])->name('enseignants.destroy');
 
-// Utilisation de Route::resource pour les opérations CRUD standard
-Route::resource('chefs-departement', ChefDepartementController::class)->only([
-    'index', 'store', 'show', 'update', 'destroy'
-]);
-Route::resource('contrainte', ContrainteController::class)->only([
-    'index', 'store', 'show', 'update', 'destroy'
-]);
-Route::resource('enseignant', EnseignantController::class)->only([
-    'index', 'store', 'show', 'update', 'destroy'
-]);
-Route::resource('etudiant', EtudiantController::class)->only([
-    'index', 'store', 'show', 'update', 'destroy'
-]);
-Route::resource('examen', ExamenController::class)->only([
-    'index', 'store', 'show', 'update', 'destroy'
-]);
-Route::resource('groupe', GroupeController::class)->only([
-    'index', 'store', 'show', 'update', 'destroy'
-]);
-Route::resource('module', ModuleController::class)->only([
-    'index', 'store', 'show', 'update', 'destroy'
-]);
-Route::resource('notification', NotificationController::class)->only([
-    'index', 'store', 'show', 'update', 'destroy'
-]);
-Route::resource('responsableplan', ResponsablePlanificationController::class)->only([
-    'index', 'store', 'show', 'update', 'destroy'
-]);
-Route::resource('salle', SalleController::class)->only([
-    'index', 'store', 'show', 'update', 'destroy'
-]);
-Route::resource('utilisateur', UtilisateurController::class)->only([
-    'index', 'store', 'show', 'update', 'destroy'
-]);
+/**
+ * Examens
+ */
+Route::get('/examens', [ExamenController::class, 'index'])->name('examens.index');
+Route::post('/examens', [ExamenController::class, 'store'])->name('examens.store');
+Route::get('/examens/{id}', [ExamenController::class, 'show'])->name('examens.show');
+Route::put('/examens/{id}', [ExamenController::class, 'update'])->name('examens.update');
+Route::delete('/examens/{id}', [ExamenController::class, 'destroy'])->name('examens.destroy');
+
+/**
+ * Modules
+ */
+Route::get('/modules', [ModuleController::class, 'index'])->name('modules.index');
+Route::post('/modules', [ModuleController::class, 'store'])->name('modules.store');
+Route::get('/modules/{id}', [ModuleController::class, 'show'])->name('modules.show');
+Route::put('/modules/{id}', [ModuleController::class, 'update'])->name('modules.update');
+Route::delete('/modules/{id}', [ModuleController::class, 'destroy'])->name('modules.destroy');
+
+/**
+ * Notifications
+ */
+Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+Route::post('/notifications', [NotificationController::class, 'store'])->name('notifications.store');
+Route::get('/notifications/{id}', [NotificationController::class, 'show'])->name('notifications.show');
+Route::put('/notifications/{id}', [NotificationController::class, 'update'])->name('notifications.update');
+Route::delete('/notifications/{id}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
+
+/**
+ * Salles
+ */
+Route::get('/salles', [SalleController::class, 'index'])->name('salles.index');
+Route::post('/salles', [SalleController::class, 'store'])->name('salles.store');
+Route::get('/salles/{id}', [SalleController::class, 'show'])->name('salles.show');
+Route::put('/salles/{id}', [SalleController::class, 'update'])->name('salles.update');
+Route::delete('/salles/{id}', [SalleController::class, 'destroy'])->name('salles.destroy');
+
+/**
+ * Chef de Département
+ */
+Route::get('/chefs-departement', [ChefDepartementController::class, 'index'])->name('chefs-departement.index');
+Route::post('/chefs-departement', [ChefDepartementController::class, 'store'])->name('chefs-departement.store');
+Route::get('/chefs-departement/{id}', [ChefDepartementController::class, 'show'])->name('chefs-departement.show');
+Route::put('/chefs-departement/{id}', [ChefDepartementController::class, 'update'])->name('chefs-departement.update');
+Route::delete('/chefs-departement/{id}', [ChefDepartementController::class, 'destroy'])->name('chefs-departement.destroy');
+
+/**
+ * Responsable Planification
+ */
+Route::get('/responsables-planification', [ResponsablePlanificationController::class, 'index'])->name('responsables-planification.index');
+Route::post('/responsables-planification', [ResponsablePlanificationController::class, 'store'])->name('responsables-planification.store');
+Route::get('/responsables-planification/{id}', [ResponsablePlanificationController::class, 'show'])->name('responsables-planification.show');
+Route::put('/responsables-planification/{id}', [ResponsablePlanificationController::class, 'update'])->name('responsables-planification.update');
+Route::delete('/responsables-planification/{id}', [ResponsablePlanificationController::class, 'destroy'])->name('responsables-planification.destroy');
+
+
+/**
+ * Contraintes
+ */
+Route::get('/contraintes', [ContrainteController::class, 'index'])->name('contraintes.index');        // Liste des contraintes
+Route::post('/contraintes', [ContrainteController::class, 'store'])->name('contraintes.store');       // Créer une contrainte
+Route::get('/contraintes/{id}', [ContrainteController::class, 'show'])->name('contraintes.show');     // Afficher une contrainte
+Route::put('/contraintes/{id}', [ContrainteController::class, 'update'])->name('contraintes.update'); // Mettre à jour une contrainte
+Route::delete('/contraintes/{id}', [ContrainteController::class, 'destroy'])->name('contraintes.destroy'); // Supprimer une contrainte
+
 // --------------------------------------------------------------------------
 // Routes pour les opérations métier spécifiques au Chef de Département
 // --------------------------------------------------------------------------
 
-Route::prefix('chefs-departement/{chefId}')->group(function () {
+Route::prefix('chefs-departements/{chefId}')->group(function () {
     // POST /api/chefs-departement/{chefId}/valider-plan
     // Valider un ou tous les plans d'examens. Prend un tableau d'ID d'examens en option dans le corps de la requête.
     Route::post('/valider-plan', [ChefDepartementController::class, 'validerPlan']);
