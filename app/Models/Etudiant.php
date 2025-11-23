@@ -5,7 +5,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Etudiant extends Utilisateur
 {
-    protected $fillable = ['matricule'];
+    // Include parent fields plus student-specific fields so mass-assignment works
+    protected $fillable = [
+        'nom', 'prenom', 'email', 'motDePasse', 'role', 'specialite', 'departement',
+        'matricule', 'groupe_id'
+    ];
 
     public function groupe()
     {

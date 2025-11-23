@@ -11,8 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('chef_departements', function (Blueprint $table) {
+        Schema::create('groupes', function (Blueprint $table) {
             $table->id();
+
+            $table->string('nomGroupe')->unique(); // Nom du groupe
+            $table->string('niveau');               // Niveau du groupe (ex: L1, L2, M1, etc.)
+
             $table->timestamps();
         });
     }
@@ -22,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('chef_departements');
+        Schema::dropIfExists('groupes');
     }
 };

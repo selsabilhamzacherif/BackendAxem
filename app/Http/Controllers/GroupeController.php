@@ -22,11 +22,13 @@ class GroupeController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'nom' => 'required|string|max:255',
-            'description' => 'nullable|string',
+            'nomGroupe' => 'required|string|max:255|unique:groupes,nomGroupe',
+            'niveau' => 'required|string|max:50',
         ]);
 
-        $groupe = Groupe::create($request->all());
+        $data = $request->only(['nomGroupe', 'niveau']);
+
+        $groupe = Groupe::create($data);
 
         return response()->json([
             'message' => 'Groupe créé avec succès',
@@ -49,12 +51,12 @@ class GroupeController extends Controller
     public function update(Request $request, string $id)
     {
         $request->validate([
-            'nom' => 'required|string|max:255',
-            'description' => 'nullable|string',
+            'nomGroupe' => 'required|string|max:255|unique:groupes,nomGroupe,' . $id,
+            'niveau' => 'required|string|max:50',
         ]);
 
         $groupe = Groupe::findOrFail($id);
-        $groupe->update($request->all());
+        $groupe->update($request->only(['nomGroupe', 'niveau']));
 
         return response()->json([
             'message' => 'Groupe mis à jour avec succès',

@@ -31,7 +31,8 @@ class EtudiantController extends Controller
             'role' => 'required|string',
             'specialite' => 'nullable|string',
             'departement' => 'nullable|string',
-            'matricule' => 'required|string|unique:etudiants,matricule',
+            // matricule is stored on utilisateurs table
+            'matricule' => 'required|string|unique:utilisateurs,matricule',
             'groupe_id' => 'nullable|exists:groupes,id',
         ]);
 
@@ -77,7 +78,7 @@ class EtudiantController extends Controller
             'role' => 'required|string',
             'specialite' => 'nullable|string',
             'departement' => 'nullable|string',
-            'matricule' => 'required|string|unique:etudiants,matricule,' . $etudiant->id,
+            'matricule' => 'required|string|unique:utilisateurs,matricule,' . $etudiant->id,
             'groupe_id' => 'nullable|exists:groupes,id',
         ]);
 

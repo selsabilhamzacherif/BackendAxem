@@ -11,8 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('_etudiants', function (Blueprint $table) {
+        Schema::create('salles', function (Blueprint $table) {
             $table->id();
+
+            $table->string('nomSalle')->unique();  // Nom de la salle
+            $table->integer('capacite');           // Capacité de la salle
+            $table->string('typeSalle');           // Type de salle (ex: TP, cours magistral, labo)
+
             $table->timestamps();
         });
     }
@@ -22,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('_etudiants');
+        Schema::dropIfExists('salles');
     }
 };

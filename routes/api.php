@@ -15,6 +15,9 @@ use App\Http\Controllers\UtilisateurController;
 /**
  * Utilisateurs
  */
+
+//Route::get('/test', function() { return 'ok'; });
+
 Route::get('/utilisateurs', [UtilisateurController::class, 'index'])->name('utilisateurs.index');
 Route::post('/utilisateurs', [UtilisateurController::class, 'store'])->name('utilisateurs.store');
 Route::get('/utilisateurs/{id}', [UtilisateurController::class, 'show'])->name('utilisateurs.show');
@@ -87,20 +90,20 @@ Route::delete('/salles/{id}', [SalleController::class, 'destroy'])->name('salles
 /**
  * Chef de Département
  */
-Route::get('/chefs-departement', [ChefDepartementController::class, 'index'])->name('chefs-departement.index');
-Route::post('/chefs-departement', [ChefDepartementController::class, 'store'])->name('chefs-departement.store');
-Route::get('/chefs-departement/{id}', [ChefDepartementController::class, 'show'])->name('chefs-departement.show');
-Route::put('/chefs-departement/{id}', [ChefDepartementController::class, 'update'])->name('chefs-departement.update');
-Route::delete('/chefs-departement/{id}', [ChefDepartementController::class, 'destroy'])->name('chefs-departement.destroy');
+Route::get('/chefs-departements', [ChefDepartementController::class, 'index'])->name('chefs-departement.index');
+Route::post('/chefs-departements', [ChefDepartementController::class, 'store'])->name('chefs-departement.store');
+Route::get('/chefs-departements/{id}', [ChefDepartementController::class, 'show'])->name('chefs-departement.show');
+Route::put('/chefs-departements/{id}', [ChefDepartementController::class, 'update'])->name('chefs-departement.update');
+Route::delete('/chefs-departements/{id}', [ChefDepartementController::class, 'destroy'])->name('chefs-departement.destroy');
 
 /**
  * Responsable Planification
  */
-Route::get('/responsables-planification', [ResponsablePlanificationController::class, 'index'])->name('responsables-planification.index');
-Route::post('/responsables-planification', [ResponsablePlanificationController::class, 'store'])->name('responsables-planification.store');
-Route::get('/responsables-planification/{id}', [ResponsablePlanificationController::class, 'show'])->name('responsables-planification.show');
-Route::put('/responsables-planification/{id}', [ResponsablePlanificationController::class, 'update'])->name('responsables-planification.update');
-Route::delete('/responsables-planification/{id}', [ResponsablePlanificationController::class, 'destroy'])->name('responsables-planification.destroy');
+Route::get('/responsables-planifications', [ResponsablePlanificationController::class, 'index'])->name('responsables-planification.index');
+Route::post('/responsables-planifications', [ResponsablePlanificationController::class, 'store'])->name('responsables-planification.store');
+Route::get('/responsables-planifications/{id}', [ResponsablePlanificationController::class, 'show'])->name('responsables-planification.show');
+Route::put('/responsables-planifications/{id}', [ResponsablePlanificationController::class, 'update'])->name('responsables-planification.update');
+Route::delete('/responsables-planifications/{id}', [ResponsablePlanificationController::class, 'destroy'])->name('responsables-planification.destroy');
 
 
 /**

@@ -1,7 +1,7 @@
 <?php
 namespace App\Models;
 
-class ResponsablePlan extends Utilisateur
+class ResponsablePlanification extends Utilisateur
 {
     public function gererComptes() {}
     public function planifierExam() {}

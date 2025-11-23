@@ -29,6 +29,8 @@ class UtilisateurController extends Controller
             'role' => 'required|string',
             'specialite' => 'nullable|string',
             'departement' => 'nullable|string',
+            'matricule' => 'nullable|string|unique:utilisateurs,matricule',
+            'groupe_id' => 'nullable|exists:groupes,id',
         ]);
 
         $utilisateur = Utilisateur::create([
@@ -39,6 +41,8 @@ class UtilisateurController extends Controller
             'role' => $request->role,
             'specialite' => $request->specialite,
             'departement' => $request->departement,
+            'matricule' => $request->matricule,
+            'groupe_id' => $request->groupe_id,
         ]);
 
         return response()->json([
@@ -69,6 +73,8 @@ class UtilisateurController extends Controller
             'role' => 'required|string',
             'specialite' => 'nullable|string',
             'departement' => 'nullable|string',
+            'matricule' => 'nullable|string|unique:utilisateurs,matricule,' . $id,
+            'groupe_id' => 'nullable|exists:groupes,id',
         ]);
 
         $utilisateur = Utilisateur::findOrFail($id);

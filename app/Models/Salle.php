@@ -5,7 +5,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Salle extends Model
 {
-    protected $fillable = ['nomSalle', 'capacite', 'typeSalle'];
+    protected $fillable = ['nomSalle', 'capacite', 'typeSalle'];//enum
 
      public function verifierDisponibilite($date, $heure)
     {

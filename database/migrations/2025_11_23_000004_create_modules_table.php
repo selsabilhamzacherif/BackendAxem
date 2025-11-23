@@ -11,8 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('examens', function (Blueprint $table) {
+        Schema::create('modules', function (Blueprint $table) {
             $table->id();
+
+            $table->string('nomModule')->unique();  // Nom du module
+            $table->string('semestre');             // Semestre (ex: S1, S2, etc.)
+
             $table->timestamps();
         });
     }
@@ -22,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('examens');
+        Schema::dropIfExists('modules');
     }
 };

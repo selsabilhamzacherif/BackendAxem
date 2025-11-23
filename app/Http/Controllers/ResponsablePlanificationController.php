@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ResponsablePlan;
+use App\Models\ResponsablePlanification;
 use Illuminate\Http\Request;
 
 class ResponsablePlanificationController extends Controller
@@ -10,14 +10,14 @@ class ResponsablePlanificationController extends Controller
     // Liste tous les responsables de planification
     public function index()
     {
-        $responsables = ResponsablePlan::all();
+        $responsables = ResponsablePlanification::all();
         return response()->json($responsables);
     }
 
     // Affiche un responsable par son ID
     public function show($id)
     {
-        $responsable = ResponsablePlan::find($id);
+        $responsable = ResponsablePlanification::find($id);
 
         if (!$responsable) {
             return response()->json(['message' => 'Responsable non trouvé'], 404);
@@ -39,7 +39,7 @@ class ResponsablePlanificationController extends Controller
             'departement' => 'nullable|string',
         ]);
 
-        $responsable = ResponsablePlan::create([
+        $responsable = ResponsablePlanification::create([
             'nom' => $validated['nom'],
             'prenom' => $validated['prenom'],
             'email' => $validated['email'],
@@ -55,7 +55,7 @@ class ResponsablePlanificationController extends Controller
     // Met à jour un responsable
     public function update(Request $request, $id)
     {
-        $responsable = ResponsablePlan::find($id);
+        $responsable = ResponsablePlanification::find($id);
 
         if (!$responsable) {
             return response()->json(['message' => 'Responsable non trouvé'], 404);
@@ -83,7 +83,7 @@ class ResponsablePlanificationController extends Controller
     // Supprime un responsable
     public function destroy($id)
     {
-        $responsable = ResponsablePlan::find($id);
+        $responsable = ResponsablePlanification::find($id);
 
         if (!$responsable) {
             return response()->json(['message' => 'Responsable non trouvé'], 404);
