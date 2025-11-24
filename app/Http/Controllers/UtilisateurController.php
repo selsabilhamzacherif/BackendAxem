@@ -2,106 +2,193 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Utilisateur;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 
 class UtilisateurController extends Controller
 {
-    /**
-     * Afficher la liste des utilisateurs.
-     */
+    /*-----------------------------------------*
+     | CRUD UTILISATEURS                        |
+     *-----------------------------------------*/
+
     public function index()
     {
-        $utilisateurs = Utilisateur::all();
-        return response()->json($utilisateurs);
+        return response()->json(Utilisateur::all());
     }
 
-    /**
-     * Créer un nouvel utilisateur.
-     */
     public function store(Request $request)
     {
-        $request->validate([
-            'nom' => 'required|string|max:255',
-            'prenom' => 'required|string|max:255',
-            'email' => 'required|email|unique:utilisateurs,email',
+        $data = $request->validate([
+            'nom' => 'required|string',
+            'prenom' => 'required|string',
+            'email' => 'required|email|unique:utilisateurs',
             'motDePasse' => 'required|string|min:6',
             'role' => 'required|string',
             'specialite' => 'nullable|string',
             'departement' => 'nullable|string',
-            'matricule' => 'nullable|string|unique:utilisateurs,matricule',
-            'groupe_id' => 'nullable|exists:groupes,id',
+            'matricule' => 'nullable|string',
+            'groupe_id' => 'nullable|integer',
         ]);
 
-        $utilisateur = Utilisateur::create([
-            'nom' => $request->nom,
-            'prenom' => $request->prenom,
-            'email' => $request->email,
-            'motDePasse' => bcrypt($request->motDePasse),
-            'role' => $request->role,
-            'specialite' => $request->specialite,
-            'departement' => $request->departement,
-            'matricule' => $request->matricule,
-            'groupe_id' => $request->groupe_id,
-        ]);
+        $data['motDePasse'] = Hash::make($data['motDePasse']);
 
-        return response()->json([
-            'message' => 'Utilisateur créé avec succès',
-            'data' => $utilisateur
-        ], 201);
+        $user = Utilisateur::create($data);
+        return response()->json($user, 201);
     }
 
-    /**
-     * Afficher un utilisateur spécifique.
-     */
-    public function show(string $id)
+    public function show($id)
     {
-        $utilisateur = Utilisateur::findOrFail($id);
-        return response()->json($utilisateur);
+        $user = Utilisateur::findOrFail($id);
+        return response()->json($user);
     }
 
-    /**
-     * Mettre à jour un utilisateur.
-     */
-    public function update(Request $request, string $id)
+    public function update(Request $request, $id)
     {
-        $request->validate([
-            'nom' => 'required|string|max:255',
-            'prenom' => 'required|string|max:255',
-            'email' => 'required|email|unique:utilisateurs,email,' . $id,
-            'motDePasse' => 'nullable|string|min:6',
-            'role' => 'required|string',
-            'specialite' => 'nullable|string',
-            'departement' => 'nullable|string',
-            'matricule' => 'nullable|string|unique:utilisateurs,matricule,' . $id,
-            'groupe_id' => 'nullable|exists:groupes,id',
-        ]);
+        $user = Utilisateur::findOrFail($id);
+        $data = $request->all();
 
-        $utilisateur = Utilisateur::findOrFail($id);
-
-        $data = $request->only(['nom','prenom','email','role','specialite','departement']);
-        if ($request->filled('motDePasse')) {
-            $data['motDePasse'] = bcrypt($request->motDePasse);
+        if(isset($data['motDePasse'])){
+            $data['motDePasse'] = Hash::make($data['motDePasse']);
         }
 
-        $utilisateur->update($data);
-
-        return response()->json([
-            'message' => 'Utilisateur mis à jour avec succès',
-            'data' => $utilisateur
-        ]);
+        $user->update($data);
+        return response()->json($user);
     }
 
-    /**
-     * Supprimer un utilisateur.
-     */
-    public function destroy(string $id)
+    public function destroy($id)
     {
-        $utilisateur = Utilisateur::findOrFail($id);
-        $utilisateur->delete();
+        $user = Utilisateur::findOrFail($id);
+        $user->delete();
+        return response()->json(['message' => 'Utilisateur supprimé']);
+    }
 
-        return response()->json([
-            'message' => 'Utilisateur supprimé avec succès'
-        ]);
+    public function getByRole($role)
+    {
+        $users = Utilisateur::where('role', $role)->get();
+        return response()->json($users);
+    }
+
+
+    /*-----------------------------------------*
+     | ACTIONS POUR ETUDIANT                    |
+     *-----------------------------------------*/
+
+    public function consulterExams($id)
+    {
+        $user = Utilisateur::findOrFail($id);
+
+        if(!$user->isEtudiant()) return response()->json(['error' => 'Non autorisé'], 403);
+
+        return response()->json($user->etudiant_consulterExams());
+    }
+
+    public function telechargerPlanning($id)
+    {
+        $user = Utilisateur::findOrFail($id);
+
+        if(!$user->isEtudiant()) return response()->json(['error' => 'Non autorisé'], 403);
+
+        return response()->json($user->etudiant_telechargerPlanning());
+    }
+
+    public function consulterGroupe($id)
+    {
+        $user = Utilisateur::findOrFail($id);
+
+        if(!$user->isEtudiant()) return response()->json(['error' => 'Non autorisé'], 403);
+
+        return response()->json($user->etudiant_consulterGroupe());
+    }
+
+
+    /*-----------------------------------------*
+     | ACTIONS POUR ENSEIGNANT                  |
+     *-----------------------------------------*/
+
+    public function proposerCreneau(Request $request, $id)
+    {
+        $user = Utilisateur::findOrFail($id);
+
+        if(!$user->isEnseignant()) return response()->json(['error' => 'Non autorisé'], 403);
+
+        $creneaux = $request->input('creneaux', []);
+        return response()->json($user->enseignant_proposerCreneau($creneaux));
+    }
+
+    public function signalerContrainte(Request $request, $id)
+    {
+        $user = Utilisateur::findOrFail($id);
+
+        if(!$user->isEnseignant()) return response()->json(['error' => 'Non autorisé'], 403);
+
+        return response()->json($user->enseignant_signalerContrainte($request->all()));
+    }
+
+    public function consulterPlanningEnseignant($id)
+    {
+        $user = Utilisateur::findOrFail($id);
+
+        if(!$user->isEnseignant()) return response()->json(['error' => 'Non autorisé'], 403);
+
+        return response()->json($user->enseignant_consulterPlanning());
+    }
+
+
+    /*-----------------------------------------*
+     | ACTIONS POUR RESPONSABLE PLANIFICATION  |
+     *-----------------------------------------*/
+
+    public function gererComptes(Request $request, $id)
+    {
+        $user = Utilisateur::findOrFail($id);
+
+        if(!$user->isResponsable()) return response()->json(['error' => 'Non autorisé'], 403);
+
+        $action = $request->input('action', 'create');
+        $data = $request->all();
+
+        return response()->json($user->resp_gererComptes($data, $action));
+    }
+
+    public function gererSalles(Request $request, $id)
+    {
+        $user = Utilisateur::findOrFail($id);
+
+        if(!$user->isResponsable()) return response()->json(['error' => 'Non autorisé'], 403);
+
+        $action = $request->input('action', 'create');
+        $data = $request->all();
+
+        return response()->json($user->resp_gererSalles($data, $action));
+    }
+
+    public function planifierAutomatiquement(Request $request, $id)
+    {
+        $user = Utilisateur::findOrFail($id);
+
+        if(!$user->isResponsable()) return response()->json(['error' => 'Non autorisé'], 403);
+
+        $data = $request->all();
+
+        return response()->json($user->resp_planifierAutomatiquement($data));
+    }
+
+
+    /*-----------------------------------------*
+     | ACTIONS POUR CHEF DEPARTEMENT           |
+     *-----------------------------------------*/
+
+    public function validerExamens(Request $request, $id)
+    {
+        $user = Utilisateur::findOrFail($id);
+
+        if(!$user->isChef()) return response()->json(['error' => 'Non autorisé'], 403);
+
+        $niveau = $request->input('niveau');
+        $examens = $request->input('examens', null);
+
+        return response()->json($user->chef_validerExamens($niveau, $examens));
     }
 }
+        

@@ -3,17 +3,16 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Examen;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Examen;
 
 class ExamenController extends Controller
 {
-
-     public function index(Request $request)
+    // Lister tous les examens avec filtres et pagination
+    public function index(Request $request)
     {
         $query = Examen::with(['module', 'salle', 'groupe', 'superviseur']);
 
-        // Filtres
         if ($request->has('statut')) {
             $query->where('statut', $request->statut);
         }
@@ -38,41 +37,6 @@ class ExamenController extends Controller
         ]);
     }
 
-    // Créer un examen (Responsable Plan ou Enseignant)
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'date' => 'required|date|after:today',
-            'heure' => 'required',
-            'type' => 'required|string',
-            'niveau' => 'required|string',
-            'module_id' => 'required|exists:modules,id',
-            'salle_id' => 'required|exists:salles,id',
-            'groupe_id' => 'required|exists:groupes,id',
-            'superviseur_id' => 'required|exists:utilisateurs,id'
-        ]);
-
-        $user = Auth::user();
-       // $$examen = Examen::findOrFail($id);
-
-        // Vérifier les permissions
-        if (!in_array($user->role, ['responsable_plan', 'enseignant'])) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Non autorisé'
-            ], 403);
-        }
-
-        if ($user->role === 'responsable_plan') {
-            $result = $user->planifierExam($validated);
-        } else {
-            // Enseignant propose un créneau
-            $result = $user->proposerCreneau([$validated]);
-        }
-
-        return response()->json($result, $result['success'] ? 201 : 400);
-    }
-
     // Afficher un examen
     public function show($id)
     {
@@ -84,11 +48,36 @@ class ExamenController extends Controller
         ]);
     }
 
+    // Créer un examen (Responsable plan ou Enseignant)
+    public function store(Request $request)
+    {
+        $user = Auth::user();
+        if (!in_array($user->role, ['responsable_plan', 'enseignant'])) {
+            return response()->json(['success' => false, 'message' => 'Non autorisé'], 403);
+        }
+
+        $validated = $request->validate([
+            'date' => 'required|date|after:today',
+            'heure' => 'required',
+            'type' => 'required|string',
+            'niveau' => 'required|string',
+            'module_id' => 'required|exists:modules,id',
+            'salle_id' => 'required|exists:salles,id',
+            'groupe_id' => 'required|exists:groupes,id',
+            'superviseur_id' => 'required|exists:utilisateurs,id'
+        ]);
+
+        $result = ($user->role === 'responsable_plan')
+                    ? $user->planifierExam($validated)
+                    : $user->proposerCreneau([$validated]);
+
+        return response()->json($result, $result['success'] ? 201 : 400);
+    }
+
     // Modifier un examen
     public function update(Request $request, $id)
     {
         $examen = Examen::findOrFail($id);
-
         $validated = $request->validate([
             'date' => 'sometimes|date',
             'heure' => 'sometimes',
@@ -105,28 +94,21 @@ class ExamenController extends Controller
         return response()->json($result, $result['success'] ? 200 : 400);
     }
 
-    // Supprimer un examen
+    // Supprimer un examen (seulement responsable plan)
     public function destroy($id)
     {
         $user = Auth::user();
-
         if ($user->role !== 'responsable_plan') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Non autorisé'
-            ], 403);
+            return response()->json(['success' => false, 'message' => 'Non autorisé'], 403);
         }
 
         $examen = Examen::findOrFail($id);
         $examen->delete();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Examen supprimé'
-        ]);
+        return response()->json(['success' => true, 'message' => 'Examen supprimé']);
     }
 
-    // Détecter les conflits
+    // Détecter conflits
     public function detecterConflits($id)
     {
         $examen = Examen::findOrFail($id);
@@ -139,105 +121,16 @@ class ExamenController extends Controller
         ]);
     }
 
-    // Valider des examens (Chef Département)
-    public function valider(Request $request)
-    {
-        $user = Auth::user();
-
-        if ($user->role !== 'chef_departement') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Non autorisé'
-            ], 403);
-        }
-
-        $examenIds = $request->input('examen_ids', null);
-        $examens = $examenIds ? Examen::whereIn('id', $examenIds)->get() : null;
-
-        $result = $user->validerPlan($examens);
-
-        return response()->json($result);
-    }
-
-    // Publier le planning (Chef Département)
-    public function publier()
-    {
-        $user = Auth::user();
-
-        if ($user->role !== 'chef_departement') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Non autorisé'
-            ], 403);
-        }
-
-        $result = $user->publierPlan();
-
-        return response()->json($result);
-    }
-
-    // Consulter le planning (Étudiant)
+    // Planning étudiant
     public function monPlanning()
     {
         $user = Auth::user();
-
         if ($user->role !== 'etudiant') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Non autorisé'
-            ], 403);
+            return response()->json(['success' => false, 'message' => 'Non autorisé'], 403);
         }
 
-        $examens = $user->consulterExams();
+        $examens = $user->consulterExams(); // méthode à implémenter côté Étudiant
 
-        return response()->json([
-            'success' => true,
-            'data' => $examens
-        ]);
+        return response()->json(['success' => true, 'data' => $examens]);
     }
-
-    // Statistiques
-    public function statistiques()
-    {
-        $user = Auth::user();
-
-        if ($user->role === 'chef_departement') {
-            $stats = $user->obtenirStatistiques();
-        } else {
-            $stats = [
-                'total' => Examen::count(),
-                'publies' => Examen::where('statut', 'publié')->count(),
-                'a_venir' => Examen::aVenir()->count()
-            ];
-        }
-
-        return response()->json([
-            'success' => true,
-            'data' => $stats
-        ]);
-    }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 }

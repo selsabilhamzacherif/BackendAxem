@@ -14,27 +14,24 @@ return new class extends Migration
         Schema::create('examens', function (Blueprint $table) {
             $table->id();
 
-            $table->date('date');               // Date de l'examen
-            $table->time('heure');              // Heure de l'examen
-            $table->string('type');             // Type d'examen (ex: partiel, final)
-            $table->string('niveau');
-                   // Niveau (ex: L1, L2, M1...)
+            $table->date('date');
+            $table->time('heure');
+            $table->string('type'); // contrôle, partiel, final, etc.
+            $table->string('niveau'); // ex : L1, L2, etc.
 
             // Clés étrangères
-            $table->unsignedBigInteger('module_id');
-            $table->unsignedBigInteger('salle_id');
-            $table->unsignedBigInteger('groupe_id');
-            $table->unsignedBigInteger('superviseur_id')->nullable();
+            $table->foreignId('module_id')->constrained('modules')->cascadeOnDelete();
+            $table->foreignId('salle_id')->constrained('salles')->cascadeOnDelete();
+            $table->foreignId('groupe_id')->constrained('groupes')->cascadeOnDelete();
+            $table->foreignId('superviseur_id')->nullable()->constrained('utilisateurs')->nullOnDelete();
 
-            $table->enum('statut', ['brouillon','validé','publié'])->default('brouillon');
+            // Statut et champs optionnels
+            $table->string('statut')->default('brouillon'); // brouillon, validé, publié
+            $table->text('reclamation_chef')->nullable();
+            $table->dateTime('date_reclamation')->nullable();
+            $table->dateTime('date_publication')->nullable();
 
             $table->timestamps();
-
-            // Définir les relations
-            $table->foreign('module_id')->references('id')->on('modules')->onDelete('cascade');
-            $table->foreign('salle_id')->references('id')->on('salles')->onDelete('cascade');
-            $table->foreign('groupe_id')->references('id')->on('groupes')->onDelete('cascade');
-            $table->foreign('superviseur_id')->references('id')->on('utilisateurs')->onDelete('set null');
         });
     }
 

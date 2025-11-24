@@ -4,7 +4,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Carbon\Carbon;
+use App\Models\Contrainte;
+use App\Models\Notification;
 use Illuminate\Support\Facades\DB;
+
 
 class Examen extends Model
 {
@@ -18,25 +21,32 @@ class Examen extends Model
         'type',
         'niveau',
         'module_id',
+        'salle_id',
         'groupe_id',
         'superviseur_id',
-        'statut' // brouillon, validé, publié
-       // 'reclamation_chef',
-       // 'date_reclamation',
-       // 'date_publication'
+        'statut' ,             // brouillon, validé, publié
+        'reclamation_chef',
+        'date_reclamation',
+        'date_publication'
 
     ];
 
     protected $casts = [
         'date' => 'date',
-        'heure' => 'datetime'
+        'heure' => 'datetime',
+        'date_reclamation' => 'datetime',
+        'date_publication' => 'datetime'
     ];
 
-    // ---------------- Relations ----------------
-
+    // Relations
     public function module()
     {
         return $this->belongsTo(Module::class);
+    }
+
+    public function salle()
+    {
+        return $this->belongsTo(Salle::class);
     }
 
     public function groupe()
@@ -49,48 +59,23 @@ class Examen extends Model
         return $this->belongsTo(Utilisateur::class, 'superviseur_id');
     }
 
-    /**
-     * Relation many-to-many avec Salle
-     * Un examen peut se dérouler dans plusieurs salles.
-     */
-    public function salles()
-    {
-        return $this->belongsToMany(Salle::class, 'examen_salle');
-    }
-
-    /**
-     * Détecter les conflits pour cet examen
-     * Retourne un tableau de conflits détectés
-     */
+    // Méthodes métier
     public function detecterConflit()
     {
         $conflits = [];
 
         // 1. Conflit de salle
-        foreach ($this->salles as $salle) {
-            $conflitSalle = $salle->examens()
-                ->where('date', $this->date)
-                ->where('heure', $this->heure)
-                ->where('id', '!=', $this->id ?? 0)
-                ->exists();
+        $conflitSalle = Examen::where('salle_id', $this->salle_id)
+            ->where('date', $this->date)
+            ->where('heure', $this->heure)
+            ->where('id', '!=', $this->id ?? 0)
+            ->exists();
 
-            if ($conflitSalle) {
-                $conflits[] = [
-                    'type' => 'salle',
-                    'message' => "La salle {$salle->nomSalle} est déjà réservée à cette date/heure"
-                ];
-            }
-
-            // Vérifier capacité salle vs effectif groupe
-            if ($this->groupe) {
-                $effectifGroupe = $this->groupe->etudiants()->count();
-                if ($effectifGroupe > $salle->capacite) {
-                    $conflits[] = [
-                        'type' => 'capacite',
-                        'message' => "Capacité insuffisante ({$salle->capacite} places pour {$effectifGroupe} étudiants)"
-                    ];
-                }
-            }
+        if ($conflitSalle) {
+            $conflits[] = [
+                'type' => 'salle',
+                'message' => "La salle {$this->salle->nomSalle} est déjà réservée à cette date/heure"
+            ];
         }
 
         // 2. Conflit superviseur
@@ -140,32 +125,43 @@ class Examen extends Model
             }
         }
 
+        // 5. Capacité salle vs effectif groupe
+        if ($this->salle && $this->groupe) {
+            $effectifGroupe = $this->groupe->etudiants()->count();
+            if ($effectifGroupe > $this->salle->capacite) {
+                $conflits[] = [
+                    'type' => 'capacite',
+                    'message' => "Capacité salle insuffisante ({$this->salle->capacite} places pour {$effectifGroupe} étudiants)"
+                ];
+            }
+        }
+
         return $conflits;
     }
 
-    /**
-     * Modifier un examen avec vérification des conflits
-     */
     public function modifier(array $data)
     {
         DB::beginTransaction();
         try {
+            // Mise à jour temporaire pour vérification
             $anciennesDonnees = $this->getAttributes();
             $this->fill($data);
 
+            // Détection des conflits
             $conflits = $this->detecterConflit();
 
             if (!empty($conflits)) {
                 DB::rollBack();
-                // Restaurer anciennes données en mémoire
-                $this->fill($anciennesDonnees);
                 return [
                     'success' => false,
                     'conflits' => $conflits
                 ];
             }
 
+            // Sauvegarde effective
             $this->save();
+
+            // Notification des parties prenantes
             $this->notifierModification($anciennesDonnees);
 
             DB::commit();
@@ -176,7 +172,6 @@ class Examen extends Model
 
         } catch (\Exception $e) {
             DB::rollBack();
-            $this->fill($anciennesDonnees);
             return [
                 'success' => false,
                 'error' => $e->getMessage()
@@ -184,20 +179,16 @@ class Examen extends Model
         }
     }
 
-    /**
-     * Notifier les étudiants et superviseur en cas de modification
-     */
-    private function notifierModification($anciennesDonnees)
+    public function notifierModification($anciennesDonnees)
     {
         // Notifier les étudiants du groupe
-        if ($this->groupe) {
-            foreach ($this->groupe->etudiants as $etudiant) {
-                Notification::create([
-                    'destinataire_id' => $etudiant->id,
-                    'message' => "L'examen de {$this->module->nomModule} a été modifié",
-                    'date' => now()
-                ]);
-            }
+        $etudiants = $this->groupe->etudiants;
+        foreach ($etudiants as $etudiant) {
+            Notification::create([
+                'destinataire_id' => $etudiant->id,
+                'message' => "L'examen de {$this->module->nomModule} a été modifié",
+                'date' => now()
+            ]);
         }
 
         // Notifier le superviseur si changé
@@ -210,15 +201,44 @@ class Examen extends Model
         }
     }
 
-    // ---------------- Scopes ----------------
-
+    // Scopes utiles
     public function scopePlanifies($query)
     {
-        return $query->whereIn('statut', ['validé', 'publié']);
+        return $query->where('statut', 'validé')
+                     ->orWhere('statut', 'publié');
     }
 
     public function scopeAVenir($query)
     {
         return $query->where('date', '>=', now()->toDateString());
     }
+    public static function publierPlanParNiveau($niveau)
+{
+    // Récupérer tous les examens validés du niveau
+    $examens = self::where('niveau', $niveau)
+                   ->where('statut', 'validé')
+                   ->get();
+
+    // Mettre à jour le statut et la date de publication
+    foreach ($examens as $examen) {
+        $examen->statut = 'publié';
+        $examen->date_publication = now();
+        $examen->save();
+    }
+
+    return $examens;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
