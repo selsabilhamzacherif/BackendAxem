@@ -7,14 +7,13 @@ use Illuminate\Http\Request;
 
 class ResponsablePlanificationController extends Controller
 {
-    // Liste tous les responsables de planification
+    // Liste tous les responsables
     public function index()
     {
-        $responsables = ResponsablePlanification::all();
-        return response()->json($responsables);
+        return response()->json(ResponsablePlanification::all());
     }
 
-    // Affiche un responsable par son ID
+    // Affiche un responsable par ID
     public function show($id)
     {
         $responsable = ResponsablePlanification::find($id);
@@ -92,5 +91,34 @@ class ResponsablePlanificationController extends Controller
         $responsable->delete();
 
         return response()->json(['message' => 'Responsable supprimé avec succès']);
+    }
+
+    // ---------------- Méthodes spécifiques ----------------
+
+    // Gérer les comptes (create/update/delete)
+    public function gererComptes(Request $request, $action = 'create')
+    {
+        $responsable = new ResponsablePlanification();
+        $result = $responsable->gererComptes($request->all(), $action);
+
+        return response()->json($result);
+    }
+
+    // Gérer les salles (create/update/delete)
+    public function gererSalles(Request $request, $action = 'create')
+    {
+        $responsable = new ResponsablePlanification();
+        $result = $responsable->gererSalles($request->all(), $action);
+
+        return response()->json($result);
+    }
+
+    // Planification automatique d’un examen
+    public function planifierAutomatiquement(Request $request)
+    {
+        $responsable = new ResponsablePlanification();
+        $result = $responsable->planifierAutomatiquement($request->all());
+
+        return response()->json($result);
     }
 }

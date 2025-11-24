@@ -17,7 +17,8 @@ return new class extends Migration
             $table->date('date');               // Date de l'examen
             $table->time('heure');              // Heure de l'examen
             $table->string('type');             // Type d'examen (ex: partiel, final)
-            $table->string('niveau');           // Niveau (ex: L1, L2, M1...)
+            $table->string('niveau');
+                   // Niveau (ex: L1, L2, M1...)
 
             // Clés étrangères
             $table->unsignedBigInteger('module_id');
