@@ -29,7 +29,7 @@ class ExamenController extends Controller
             $query->where('groupe_id', $request->groupe_id);
         }
 
-        $examens = $query->orderBy('date')->orderBy('heure')->paginate(20);
+        $examens = $query->orderBy('date')->orderBy('heure')->get();
 
         return response()->json([
             'success' => true,
@@ -48,14 +48,10 @@ class ExamenController extends Controller
         ]);
     }
 
-    // Créer un examen (Responsable plan ou Enseignant)
+    // Créer un examen (Responsable plan ou Enseignant ou Public pour debug)
     public function store(Request $request)
     {
-        $user = Auth::user();
-        if (!in_array($user->role, ['responsable_plan', 'enseignant'])) {
-            return response()->json(['success' => false, 'message' => 'Non autorisé'], 403);
-        }
-
+        // Validation des champs requis
         $validated = $request->validate([
             'date' => 'required|date|after:today',
             'heure' => 'required',
@@ -64,14 +60,30 @@ class ExamenController extends Controller
             'module_id' => 'required|exists:modules,id',
             'salle_id' => 'required|exists:salles,id',
             'groupe_id' => 'required|exists:groupes,id',
-            'superviseur_id' => 'required|exists:utilisateurs,id'
+            'superviseur_id' => 'required|exists:utilisateurs,id',
+            'statut' => 'nullable|string',
+            'reclamation_chef' => 'nullable|string',
+            'date_publication' => 'nullable|date',
+            'date_reclamation' => 'nullable|date'
         ]);
 
-        $result = ($user->role === 'responsable_plan')
-                    ? $user->planifierExam($validated)
-                    : $user->proposerCreneau([$validated]);
+        try {
+            // Créer l'examen directement
+            $examen = Examen::create($validated);
 
-        return response()->json($result, $result['success'] ? 201 : 400);
+            return response()->json([
+                'success' => true,
+                'message' => 'Examen créé avec succès',
+                'data' => $examen
+            ], 201);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la création',
+                'error' => $e->getMessage()
+            ], 400);
+        }
     }
 
     // Modifier un examen
