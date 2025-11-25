@@ -301,5 +301,166 @@ class Utilisateur extends Authenticatable
             return ['success' => false, 'error' => $e->getMessage()];
         }
     }
+
+    /**
+     * Publier tous les examens validés pour un niveau (Chef de Département)
+     */
+    public function publierPlanParNiveau($niveau)
+    {
+        if (!$this->isChef()) return ['success' => false, 'message' => 'Non autorisé'];
+
+        DB::beginTransaction();
+        try {
+            $examens = Examen::where('niveau', $niveau)
+                ->where('statut', 'validé')
+                ->get();
+
+            if ($examens->isEmpty()) {
+                return ['success' => false, 'message' => "Aucun examen validé pour {$niveau}"];
+            }
+
+            foreach ($examens as $examen) {
+                $examen->statut = 'publié';
+                $examen->date_publication = now();
+                $examen->save();
+            }
+
+            // Notifications groupées par groupe
+        // Notifications groupées par groupe
+            $examensParGroupe = $examens->groupBy('groupe_id');
+
+            foreach ($examensParGroupe as $groupeId => $examsGroupe) {
+
+                // Récupérer le groupe
+                $groupe = Groupe::find($groupeId);
+                if (!$groupe) continue;
+
+                // Pour chaque étudiant du groupe
+                foreach ($groupe->etudiants as $etudiant) {
+
+                    Notification::create([
+                        'destinataire_id' => $etudiant->id,
+                        'message' => "Planning {$niveau} publié : {$examsGroupe->count()} examen(s)",
+                        'date' => now(),
+                        'type' => 'info'
+                    ])->envoyer();
+                }
+            }
+
+
+
+
+            DB::commit();
+
+            return [
+                'success' => true,
+                'niveau' => $niveau,
+                'examens_publies' => $examens->count(),
+                'details' => $examens->map(fn($e) => [
+                    'id' => $e->id,
+                    'module' => $e->module?->nomModule,
+                    'groupe' => $e->groupe?->nomGroupe,
+                    'date' => $e->date,
+                    'heure' => $e->heure
+                ])
+            ];
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * CONSULTER les examens d'un niveau
+     */
+    public function consulterExamensParNiveau($niveau)
+    {
+        return Examen::where('niveau', $niveau)
+            ->with(['module', 'salle', 'groupe', 'superviseur'])
+            ->orderBy('date')
+            ->orderBy('heure')
+            ->get();
+    }
+
+    /**
+     * Refuser des examens avec réclamations (pour le Chef de Département)
+     *
+     * @param string $niveau
+     * @param array $reclamations  // each item: ['examen_id' => id, 'message' => '...']
+     * @return array
+     */
+    public function refuserExamensAvecReclamation($niveau, $reclamations)
+    {
+        if (!$this->isChef()) return ['success' => false, 'message' => 'Non autorisé'];
+
+        DB::beginTransaction();
+        try {
+            if (empty($reclamations)) {
+                return ['success' => false, 'message' => 'Aucune réclamation fournie'];
+            }
+
+            $examensRefuses = [];
+
+            foreach ($reclamations as $reclamation) {
+                $examen = Examen::find($reclamation['examen_id']);
+                if (!$examen || $examen->niveau !== $niveau) continue;
+
+                $examen->statut = 'à_modifier';
+                $examen->reclamation_chef = $reclamation['message'] ?? null;
+                $examen->date_reclamation = now();
+                $examen->save();
+
+                $examensRefuses[] = [
+                    'id' => $examen->id,
+                    'module' => $examen->module?->nomModule,
+                    'groupe' => $examen->groupe?->nomGroupe,
+                    'message' => $reclamation['message'] ?? null
+                ];
+
+                // Notifier superviseur
+                if ($examen->superviseur_id) {
+                    Notification::create([
+                        'destinataire_id' => $examen->superviseur_id,
+                        'message' => "Examen {$examen->module?->nomModule} refusé par le chef. Motif: {$reclamation['message']}",
+                        'date' => now(),
+                        'type' => 'alerte',
+                        'metadata' => [
+                            'examen_id' => $examen->id,
+                            'reclamation' => $reclamation['message'] ?? null
+                        ]
+                    ])->envoyer();
+                }
+            }
+
+            // Notifier responsable planning
+            $responsable = Utilisateur::where('role', self::ROLE_RESPONSABLE)->first();
+            if ($responsable && !empty($examensRefuses)) {
+                Notification::create([
+                    'destinataire_id' => $responsable->id,
+                    'message' => "Le chef a refusé ".count($examensRefuses)." examen(s) pour {$niveau}. Modifications demandées.",
+                    'date' => now(),
+                    'type' => 'alerte',
+                    'metadata' => [
+                        'niveau' => $niveau,
+                        'examens_refuses' => $examensRefuses
+                    ]
+                ])->envoyer();
+            }
+
+            DB::commit();
+
+            return [
+                'success' => true,
+                'niveau' => $niveau,
+                'examens_refuses' => count($examensRefuses),
+                'details' => $examensRefuses
+            ];
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
+    }
 }
 

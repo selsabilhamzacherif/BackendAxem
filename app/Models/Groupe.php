@@ -11,7 +11,10 @@ class Groupe extends Model
     protected $fillable = ['nomGroupe', 'niveau'];
 
     public function etudiants()
-    {
-        return $this->hasMany(Etudiant::class);
-    }
+
+{
+    return $this->hasMany(Utilisateur::class, 'groupe_id')
+                ->where('role', 'etudiant');
 }
+
+    }

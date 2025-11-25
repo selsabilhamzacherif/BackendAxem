@@ -190,5 +190,26 @@ class UtilisateurController extends Controller
 
         return response()->json($user->chef_validerExamens($niveau, $examens));
     }
+    public function publierPlanParNiveau(Request $request, $id)
+    {
+        $user = Utilisateur::findOrFail($id);
+
+        if(!$user->isChef()) return response()->json(['error' => 'Non autorisé'], 403);
+
+        $niveau = $request->input('niveau');
+
+        return response()->json($user->publierPlanParNiveau($niveau));
+    }
+    public function refuserExamensAvecReclamation(Request $request, $id)
+    {
+        $user = Utilisateur::findOrFail($id);
+
+        if(!$user->isChef()) return response()->json(['error' => 'Non autorisé'], 403);
+
+        $niveau = $request->input('niveau');
+        $reclamations = $request->input('reclamations', []);
+
+        return response()->json($user->refuserExamensAvecReclamation($niveau, $reclamations));
+    }
 }
-        
+

@@ -46,6 +46,10 @@ Route::prefix('responsable/{id}')->group(function () {
 // Chef de Département
 Route::prefix('chef/{id}')->group(function () {
     Route::post('/valider-examens', [UtilisateurController::class, 'validerExamens']);
+    Route::post('/publier-plan', [UtilisateurController::class, 'publierPlanParNiveau']);
+    Route::post('/refuser-examens', [UtilisateurController::class, 'refuserExamensAvecReclamation']);
+
+
 });
 
 /**
