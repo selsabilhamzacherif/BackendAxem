@@ -12,10 +12,11 @@ class Salle extends Model
      * Une salle peut accueillir plusieurs examens,
      * et un examen peut se dérouler dans plusieurs salles.
      */
-    public function examens()
+    /*public function examens()
     {
-        return $this->belongsToMany(Examen::class, 'examen_salle');
-    }
+        return $this->belongsToMany(Examen::class, 'salle_examen');
+    }*/
+
 
     /**
      * Vérifie si la salle est disponible à une date et une heure données.
@@ -24,8 +25,9 @@ class Salle extends Model
     public function verifierDisponibilite($date, $heure)
     {
         return !$this->examens()
-            ->where('date', $date)
-            ->where('heure', $heure)
-            ->exists();
+                    ->where('date', $date)
+                    ->where('heure', $heure)
+                    ->exists();
     }
+
 }

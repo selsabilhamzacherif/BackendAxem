@@ -25,7 +25,7 @@ Route::delete('/utilisateurs/{id}', [UtilisateurController::class, 'destroy'])->
 
 // Étudiant
 Route::prefix('etudiant/{id}')->group(function () {
-    Route::get('/examens', [UtilisateurController::class, 'consulterExams']);
+    Route::get('/planning', [UtilisateurController::class, 'consulterExams']);
     Route::get('/planning/telecharger', [UtilisateurController::class, 'telechargerPlanning']);
     Route::get('/groupe', [UtilisateurController::class, 'consulterGroupe']);
 });

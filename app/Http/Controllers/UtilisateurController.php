@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Utilisateur;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 
 class UtilisateurController extends Controller
 {
@@ -75,13 +77,37 @@ class UtilisateurController extends Controller
      *-----------------------------------------*/
 
     public function consulterExams($id)
-    {
-        $user = Utilisateur::findOrFail($id);
+{
+    $user = Utilisateur::findOrFail($id);
 
-        if(!$user->isEtudiant()) return response()->json(['error' => 'Non autorisé'], 403);
-
-        return response()->json($user->etudiant_consulterExams());
+    if (!$user->isEtudiant()) {
+        return response()->json(['error' => 'Accès non autorisé'], 403);
     }
+
+    $examens = $user->consulterExams();
+
+    // Format propre
+    $formatted = $examens->map(function($exam){
+        return [
+            'id' => $exam->id,
+            'date' => $exam->date,
+            'heure' => $exam->heure,
+            'type' => $exam->type,
+            'niveau' => $exam->niveau,
+            'module' => $exam->module?->nomModule,
+            'salle' => $exam->salle?->nomSalle
+           // 'superviseur' => $exam->superviseur?->nom . ' ' . $exam->superviseur?->prenom,
+        ];
+    });
+
+    return response()->json([
+        'success' => true,
+        'etudiant' => $user->nom . ' ' . $user->prenom,
+        'groupe' => $user->groupe?->nomGroupe,
+        'examens' => $formatted
+    ]);
+}
+
 
     public function telechargerPlanning($id)
     {
@@ -89,7 +115,11 @@ class UtilisateurController extends Controller
 
         if(!$user->isEtudiant()) return response()->json(['error' => 'Non autorisé'], 403);
 
-        return response()->json($user->etudiant_telechargerPlanning());
+        $examens = $user->telechargerPlanning();
+
+        return response()->json([
+            'examens' => $examens
+        ]);
     }
 
     public function consulterGroupe($id)
@@ -112,8 +142,30 @@ class UtilisateurController extends Controller
 
         if(!$user->isEnseignant()) return response()->json(['error' => 'Non autorisé'], 403);
 
+        // Accept lightweight proposals (only date + heure required).
+        $validator = Validator::make($request->all(), [
+            'creneaux' => 'required|array|min:1',
+            'creneaux.*.date' => 'required|date',
+            'creneaux.*.heure' => 'required',
+            // optional: module_id, salle_id, groupe_id, type, niveau
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 400);
+        }
+
         $creneaux = $request->input('creneaux', []);
-        return response()->json($user->enseignant_proposerCreneau($creneaux));
+        try {
+            $result = $user->enseignant_proposerCreneau($creneaux);
+            return response()->json($result);
+        } catch (\Exception $e) {
+            Log::error('Erreur proposerCreneau: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ], 500);
+        }
     }
 
     public function signalerContrainte(Request $request, $id)
@@ -122,17 +174,25 @@ class UtilisateurController extends Controller
 
         if(!$user->isEnseignant()) return response()->json(['error' => 'Non autorisé'], 403);
 
-        return response()->json($user->enseignant_signalerContrainte($request->all()));
-    }
+        $data = $request->validate([
+            'motif' => 'required|string',
+            'date' => 'nullable|date',
+            'heure' => ['nullable','regex:/^([01]\d|2[0-3]):([0-5]\d)(:([0-5]\d))?$/']
+        ]);
 
-    public function consulterPlanningEnseignant($id)
+        return response()->json($user->enseignant_signalerContrainte($data));
+    }
+        public function consulterPlanningEnseignant($id)
     {
         $user = Utilisateur::findOrFail($id);
 
-        if(!$user->isEnseignant()) return response()->json(['error' => 'Non autorisé'], 403);
+        if(!$user->isEnseignant())
+            return response()->json(['error' => 'Non autorisé'], 403);
 
-        return response()->json($user->enseignant_consulterPlanning());
+        $planning = $user->enseignant_consulterPlanning();
+        return response()->json($planning);
     }
+
 
 
     /*-----------------------------------------*

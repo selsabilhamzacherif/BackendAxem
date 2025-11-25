@@ -5,7 +5,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Contrainte extends Model
 {
-    protected $fillable = ['enseignant_id', 'date', 'heure', 'motif'];
+    protected $fillable = ['enseignant_id', 'motif', 'date', 'heure'];
 
     public function enseignant()
     {

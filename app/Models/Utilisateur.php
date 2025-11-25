@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use App\Models\Salle;
 
 class Utilisateur extends Authenticatable
 {
@@ -70,19 +71,58 @@ class Utilisateur extends Authenticatable
      |        METHODES POUR ETUDIANT                 |
      *-----------------------------------------------*/
 
-    public function etudiant_consulterExams()
-    {
-        if (!$this->isEtudiant()) return null;
+    public function consulterExams()
+   {
+    if (!$this->isEtudiant()) return null;
 
-        return Examen::where('groupe_id', $this->groupe_id)
-            ->orderBy('date')
-            ->orderBy('heure')
-            ->get();
-    }
+    return Examen::where('groupe_id', $this->groupe_id)
+        ->where('statut', 'publié')
+        ->with(['module', 'salle',/*'superviseur'*/])
+        ->orderBy('date')
+        ->orderBy('heure')
+        ->get();
+}
+
 
     public function etudiant_telechargerPlanning()
     {
-        return $this->etudiant_consulterExams();
+     if (!$this->isEtudiant()) return null;
+
+    return Examen::where('groupe_id', $this->groupe_id)
+        ->where('statut', 'publié')
+        ->with(['module', 'salle',/*'superviseur'*/])
+        ->orderBy('date')
+        ->orderBy('heure')
+        ->get();
+    }
+
+    /**
+     * Alias pour compatibility (utilisé par EtudiantController)
+     * Retourne uniquement les champs spécifiés
+     */
+    public function telechargerPlanning()
+    {
+        if (!$this->isEtudiant()) return null;
+
+        $examens = Examen::where('groupe_id', $this->groupe_id)
+            ->where('statut', 'publié')
+            ->with(['module', 'salle'])
+            ->orderBy('date')
+            ->orderBy('heure')
+            ->get();
+
+        // Retourner uniquement les champs spécifiés
+        return $examens->map(function($examen) {
+            return [
+                'id' => $examen->id,
+                'date' => $examen->date,
+                'heure' => $examen->heure,
+                'type' => $examen->type,
+                'niveau' => $examen->niveau,
+                'module' => $examen->module ? ($examen->module->nomModule ?? null) : null,
+                'salle' => $examen->salle ? ($examen->salle->nomSalle ?? null) : null
+            ];
+        })->toArray();
     }
 
     public function etudiant_consulterGroupe()
@@ -102,20 +142,57 @@ class Utilisateur extends Authenticatable
         $propositions = [];
 
         foreach ($creneaux as $data) {
+            // Accept lightweight proposals (date+heure only).
+            $requiredKeys = ['module_id', 'salle_id', 'groupe_id', 'type', 'niveau'];
+            $hasAll = true;
+            foreach ($requiredKeys as $k) {
+                if (empty($data[$k])) { $hasAll = false; break; }
+            }
+
+            if (!$hasAll) {
+                // Return a non-persisted proposal so the client can present it.
+                $propositions[] = [
+                    'status' => 'proposed',
+                    'message' => 'Créneau proposé (non persisté) — fournir module_id/salle_id/groupe_id/type/niveau pour persister',
+                    'date' => $data['date'] ?? null,
+                    'heure' => $data['heure'] ?? null
+                ];
+                continue;
+            }
+
             $examen = new Examen($data);
             $examen->enseignant_id = $this->id;
 
-            if (!$examen->salle->verifierDisponibilite($examen->date, $examen->heure)) {
+            $salle = isset($examen->salle_id) ? Salle::find($examen->salle_id) : null;
+
+            if (!$salle) {
                 $propositions[] = [
                     'status' => 'error',
-                    'message' => "Salle non dispo {$examen->date} {$examen->heure}"
+                    'message' => "Salle non spécifiée ou introuvable pour {$examen->date} {$examen->heure}"
                 ];
-            } else {
+                continue;
+            }
+
+            try {
+                if (!$salle->verifierDisponibilite($examen->date, $examen->heure)) {
+                    $propositions[] = [
+                        'status' => 'error',
+                        'message' => "Salle non dispo {$examen->date} {$examen->heure}"
+                    ];
+                    continue;
+                }
+
+                $examen->salle_id = $salle->id;
                 $examen->save();
                 $propositions[] = [
                     'status' => 'success',
                     'message' => "Créneau proposé",
                     'examen' => $examen
+                ];
+            } catch (\Exception $e) {
+                $propositions[] = [
+                    'status' => 'error',
+                    'message' => "Erreur lors de la proposition: " . $e->getMessage()
                 ];
             }
         }
@@ -123,26 +200,43 @@ class Utilisateur extends Authenticatable
         return $propositions;
     }
 
-    public function enseignant_signalerContrainte($data)
-    {
-        if (!$this->isEnseignant()) return null;
 
-        return $this->contraintes()->create([
-            'date' => $data['date'],
-            'heure' => $data['heure'],
-            'motif' => $data['motif']
-        ]);
-    }
+        public function enseignant_signalerContrainte($data)
+        {
+            if (!$this->isEnseignant()) return null;
 
-    public function enseignant_consulterPlanning()
-    {
-        if (!$this->isEnseignant()) return null;
+            return $this->contraintes()->create([
+                'motif' => $data['motif']
+            ]);
+        }
 
-        return Examen::where('enseignant_id', $this->id)
-            ->orderBy('date')
-            ->orderBy('heure')
-            ->get();
-    }
+        public function enseignant_consulterPlanning()
+        {
+            if (!$this->isEnseignant()) return null;
+
+            return Examen::where('superviseur_id', $this->id) // ou enseignant_id si tu utilises ça
+                ->where('statut', 'publié')
+                ->with(['module', 'salle', 'groupe'])
+                ->orderBy('date')
+                ->orderBy('heure')
+                ->get()
+                ->map(function($examen) {
+                    return [
+                        'id' => $examen->id,
+                        'date' => $examen->date,
+                        'heure' => $examen->heure,
+                        'type' => $examen->type,
+                        'niveau' => $examen->niveau,
+                        'module' => $examen->module?->nomModule,
+                        'salle' => $examen->salle?->nomSalle,
+                        'groupe' => $examen->groupe?->nomGroupe,
+                        'statut' => $examen->statut,
+                        'date_publication' => $examen->date_publication,
+                    ];
+                });
+        }
+
+
 
 
     /*-----------------------------------------------*
@@ -152,7 +246,6 @@ class Utilisateur extends Authenticatable
     public function resp_gererComptes(array $data, string $action = 'create')
     {
         if (!$this->isResponsable()) return null;
-
         switch ($action) {
 
             case 'create':
@@ -166,28 +259,6 @@ class Utilisateur extends Authenticatable
             case 'delete':
                 $user = Utilisateur::find($data['id']);
                 if ($user) { $user->delete(); return true; }
-                break;
-        }
-
-        return false;
-    }
-
-    public function resp_gererSalles(array $data, string $action = 'create')
-    {
-        if (!$this->isResponsable()) return null;
-
-        switch ($action) {
-
-            case 'create': return Salle::create($data);
-
-            case 'update':
-                $salle = Salle::find($data['id']);
-                if ($salle) { $salle->update($data); return $salle; }
-                break;
-
-            case 'delete':
-                $salle = Salle::find($data['id']);
-                if ($salle) { $salle->delete(); return true; }
                 break;
         }
 

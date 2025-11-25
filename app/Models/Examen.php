@@ -33,9 +33,9 @@ class Examen extends Model
 
     protected $casts = [
         'date' => 'date',
-        'heure' => 'datetime',
-        'date_reclamation' => 'datetime',
-        'date_publication' => 'datetime'
+        'heure' => 'string',
+        'date_reclamation' => 'string',
+        'date_publication' => 'string'
     ];
 
     // Relations
@@ -58,6 +58,13 @@ class Examen extends Model
     {
         return $this->belongsTo(Utilisateur::class, 'superviseur_id');
     }
+   /* public function salles()
+    {
+        return $this->belongsToMany(Salle::class, 'salle_examen');
+    }*/
+
+
+
 
     // Méthodes métier
     public function detecterConflit()
