@@ -23,8 +23,6 @@ return new class extends Migration
             DB::statement('ALTER TABLE contraintes MODIFY `heure` TIME NULL');
         }
     }
-    
-
     /**
      * Reverse the migrations.
      */

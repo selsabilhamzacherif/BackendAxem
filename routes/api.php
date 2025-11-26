@@ -19,11 +19,9 @@ Route::post('/utilisateurs', [UtilisateurController::class, 'store'])->name('uti
 Route::get('/utilisateurs/{id}', [UtilisateurController::class, 'show'])->name('utilisateurs.show');
 Route::put('/utilisateurs/{id}', [UtilisateurController::class, 'update'])->name('utilisateurs.update');
 Route::delete('/utilisateurs/{id}', [UtilisateurController::class, 'destroy'])->name('utilisateurs.destroy');
-/**
- * Routes métier spécifiques selon rôle
- */
 
-// Étudiant
+
+// Etudiant
 Route::prefix('etudiant/{id}')->group(function () {
     Route::get('/planning', [UtilisateurController::class, 'consulterExams']);
     Route::get('/planning/telecharger', [UtilisateurController::class, 'telechargerPlanning']);
@@ -41,7 +39,10 @@ Route::prefix('responsable/{id}')->group(function () {
     Route::post('/gerer-comptes', [UtilisateurController::class, 'gererComptes']);
     Route::post('/gerer-salles', [UtilisateurController::class, 'gererSalles']);
     Route::post('/planifier', [UtilisateurController::class, 'planifierAutomatiquement']);
+    Route::post('/planifier-niveau/{id_groupe}/{niveau}', [UtilisateurController::class, 'planifierNiveauAutomatiquement']);
+
 });
+ //Route::post('responsable/gerer-comptes', [UtilisateurController::class, 'gererComptes']);
 
 // Chef de Département
 Route::prefix('chef/{id}')->group(function () {

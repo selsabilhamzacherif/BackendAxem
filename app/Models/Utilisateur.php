@@ -84,17 +84,17 @@ class Utilisateur extends Authenticatable
 }
 
 
-    public function etudiant_telechargerPlanning()
+   /* public function etudiant_telechargerPlanning()
     {
      if (!$this->isEtudiant()) return null;
 
     return Examen::where('groupe_id', $this->groupe_id)
         ->where('statut', 'publié')
-        ->with(['module', 'salle',/*'superviseur'*/])
-        ->orderBy('date')
+        ->with(['module', 'salle',/*'superviseur'*///])
+      /*  ->orderBy('date')
         ->orderBy('heure')
         ->get();
-    }
+    }*/
 
     /**
      * Alias pour compatibility (utilisé par EtudiantController)
@@ -152,8 +152,8 @@ class Utilisateur extends Authenticatable
             if (!$hasAll) {
                 // Return a non-persisted proposal so the client can present it.
                 $propositions[] = [
-                    'status' => 'proposed',
-                    'message' => 'Créneau proposé (non persisté) — fournir module_id/salle_id/groupe_id/type/niveau pour persister',
+                    //'status' => 'proposed',
+                   // 'message' => 'Créneau proposé (non persisté) — fournir module_id/salle_id/groupe_id/type/niveau pour persister',
                     'date' => $data['date'] ?? null,
                     'heure' => $data['heure'] ?? null
                 ];
@@ -265,7 +265,40 @@ class Utilisateur extends Authenticatable
         return false;
     }
 
-    public function resp_planifierAutomatiquement(array $data)
+    public function resp_gererSalles(array $data, string $action = 'create')
+{
+    if (!$this->isResponsable()) return null;
+
+    switch ($action) {
+
+
+        case 'create':
+            return Salle::create($data);
+
+
+        case 'update':
+            $salle = Salle::find($data['id']);
+            if ($salle) {
+                $salle->update($data);
+                return $salle;
+            }
+            return ['error' => 'Salle introuvable'];
+
+
+        case 'delete':
+            $salle = Salle::find($data['id']);
+            if ($salle) {
+                $salle->delete();
+                return ['success' => true];
+            }
+            return ['error' => 'Salle introuvable'];
+    }
+
+    return ['error' => 'Action invalide'];
+}
+
+
+    /* public function resp_planifierAutomatiquement(array $data)
     {
         if (!$this->isResponsable()) return null;
 
@@ -326,7 +359,66 @@ class Utilisateur extends Authenticatable
         }
 
         return ['success' => false, 'conflits' => $reCheck];
-    }
+    } */
+
+        public function resp_planifierAutomatiquementPourNiveau($niveau)
+        {
+            if (!$this->isResponsable()) return null;
+
+            $examensCree = [];
+
+            // Récupérer tous les modules du niveau
+            $modules = Module::where('niveau', $niveau)->get();
+
+            // Récupérer tous les groupes du niveau
+            $groupes = Groupe::where('niveau', $niveau)->get();
+
+            foreach ($groupes as $groupe) {
+                foreach ($modules as $module) {
+
+                    $examen = new Examen([
+                        'module_id' => $module->id,
+                        'groupe_id' => $groupe->id,
+                        'type' => 'Final',
+                        'statut' => 'brouillon'
+                    ]);
+
+                    // Date et heure automatiques : exemple = jour libre à 08:00
+                    $examen->date = Carbon::now()->addDays(rand(1, 30))->toDateString();
+                    $examen->heure = "08:00";
+
+                    // Superviseur disponible
+                    $enseignants = Utilisateur::where('role', Utilisateur::ROLE_ENSEIGNANT)->get();
+                    foreach ($enseignants as $ens) {
+                        if (!$ens->examens()->where('date', $examen->date)->where('heure', $examen->heure)->exists()) {
+                            $examen->superviseur_id = $ens->id;
+                            break;
+                        }
+                    }
+
+                    // Salle disponible
+                    $salles = Salle::all();
+                    foreach ($salles as $salle) {
+                        if ($salle->verifierDisponibilite($examen->date, $examen->heure) &&
+                            $salle->capacite >= $groupe->etudiants()->count()
+                        ) {
+                            $examen->salle_id = $salle->id;
+                            break;
+                        }
+                    }
+
+                    // Vérifier les conflits
+                    $conflits = $examen->detecterConflit();
+                    if (empty($conflits)) {
+                        $examen->save();
+                        $examensCree[] = $examen;
+                    }
+                }
+            }
+
+            return ['success' => true, 'examens_crees' => $examensCree];
+        }
+
 
 
     /*-----------------------------------------------*

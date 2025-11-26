@@ -223,7 +223,7 @@ class UtilisateurController extends Controller
         return response()->json($user->resp_gererSalles($data, $action));
     }
 
-    public function planifierAutomatiquement(Request $request, $id)
+ /*    public function planifierAutomatiquement(Request $request, $id)
     {
         $user = Utilisateur::findOrFail($id);
 
@@ -233,6 +233,16 @@ class UtilisateurController extends Controller
 
         return response()->json($user->resp_planifierAutomatiquement($data));
     }
+ */
+        public function planifierNiveauAutomatiquement($id, $niveau)
+        {
+            $user = Utilisateur::findOrFail($id);
+
+            if (!$user->isResponsable())
+                return response()->json(['error' => 'Non autorisé'], 403);
+
+            return response()->json($user->resp_planifierAutomatiquementPourNiveau($niveau));
+        }
 
 
     /*-----------------------------------------*
