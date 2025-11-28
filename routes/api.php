@@ -8,6 +8,8 @@ use App\Http\Controllers\ModuleController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\SalleController;
 use App\Http\Controllers\UtilisateurController;
+use App\Http\Controllers\AuthController;
+
 /**
  * Utilisateurs
  */
@@ -120,3 +122,11 @@ Route::post('/examens/valider', [ExamenController::class, 'valider']);
 Route::post('/examens/publier', [ExamenController::class, 'publier']);
 // --------------------------------------------------------------------------
 
+Route::post('/login', [AuthController::class, 'login']);
+Route::post('/signup', [AuthController::class, 'signup']);
+
+// Routes protégées par JWT
+Route::middleware(['jwt.auth'])->group(function() {
+    Route::post('/logout', [AuthController::class, 'logout']);
+
+});

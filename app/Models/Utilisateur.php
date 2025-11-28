@@ -7,9 +7,24 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\Models\Salle;
+use Tymon\JWTAuth\Contracts\JWTSubject;
+//use Illuminate\Foundation\Auth\User as Authenticatable;
 
-class Utilisateur extends Authenticatable
+
+
+
+class Utilisateur extends Authenticatable implements JWTSubject
 {
+
+        public function getJWTIdentifier()
+    {
+        return $this->getKey();
+    }
+
+    public function getJWTCustomClaims()
+    {
+        return [];
+    }
     use HasFactory;
 
     protected $table = 'utilisateurs';
@@ -298,69 +313,6 @@ class Utilisateur extends Authenticatable
 }
 
 
-    /* public function resp_planifierAutomatiquement(array $data)
-    {
-        if (!$this->isResponsable()) return null;
-
-        $examen = new Examen($data);
-        $conflits = $examen->detecterConflit();
-
-        if (empty($conflits)) {
-            $examen->save();
-            return ['success' => true, 'examen' => $examen];
-        }
-
-        foreach ($conflits as $c) {
-
-            switch ($c['type']) {
-
-                case 'salle':
-                    $salleLibre = Salle::where('capacite', '>=', $examen->groupe->etudiants()->count())
-                        ->get()
-                        ->first(fn($s) => $s->verifierDisponibilite($examen->date, $examen->heure));
-                    if ($salleLibre) $examen->salle_id = $salleLibre->id;
-                    break;
-
-                case 'superviseur':
-                case 'contrainte':
-                    $superviseurLibre = Utilisateur::where('role', self::ROLE_ENSEIGNANT)
-                        ->get()
-                        ->first(function($ens) use ($examen) {
-                            return !$ens->examens()
-                                ->where('date', $examen->date)
-                                ->where('heure', $examen->heure)
-                                ->exists()
-                                && !Contrainte::where('enseignant_id', $ens->id)
-                                    ->where('date', $examen->date)
-                                    ->where('heure', $examen->heure)
-                                    ->exists();
-                        });
-                    if ($superviseurLibre) $examen->superviseur_id = $superviseurLibre->id;
-                    break;
-
-                case 'groupe':
-                    $examen->heure = Carbon::parse($examen->heure)->addHours(2);
-                    break;
-
-                case 'capacite':
-                    $salleGrande = Salle::where('capacite', '>=', $examen->groupe->etudiants()->count())
-                        ->get()
-                        ->first(fn($s) => $s->verifierDisponibilite($examen->date, $examen->heure));
-                    if ($salleGrande) $examen->salle_id = $salleGrande->id;
-                    break;
-            }
-        }
-
-        $reCheck = $examen->detecterConflit();
-
-        if (empty($reCheck)) {
-            $examen->save();
-            return ['success' => true, 'examen' => $examen];
-        }
-
-        return ['success' => false, 'conflits' => $reCheck];
-    } */
-
         public function resp_planifierAutomatiquementPourNiveau($niveau)
         {
             if (!$this->isResponsable()) return null;
@@ -418,6 +370,8 @@ class Utilisateur extends Authenticatable
 
             return ['success' => true, 'examens_crees' => $examensCree];
         }
+
+        
 
 
 

@@ -34,11 +34,18 @@ return [
     | Supported: "session"
     |
     */
+   
 
     'guards' => [
-        'web' => [
-            'driver' => 'session',
-            'provider' => 'users',
+        'api' => [
+            'driver' => 'jwt',
+            'provider' => 'utilisateurs',
+        ],
+    ],
+    'providers' => [
+        'utilisateurs' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\Utilisateur::class,
         ],
     ],
 
