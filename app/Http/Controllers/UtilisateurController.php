@@ -245,6 +245,46 @@ class UtilisateurController extends Controller
         }
 
 
+         //FILTRAGE PAR ROLES
+
+
+        public function getChefsDepartement()
+        {
+            $chefs = Utilisateur::where('role', Utilisateur::ROLE_CHEF)
+            ->select('id', 'nom', 'prenom', 'email')
+            ->get();
+            return response()->json([
+                'success' => true,
+                'count' => $chefs->count(),
+                'chefs' => $chefs
+            ]);
+        }
+
+        public function getEnseignants()
+        {
+            $enseignants = Utilisateur::where('role', Utilisateur::ROLE_ENSEIGNANT)
+            ->select('id', 'nom', 'prenom', 'email')
+            ->get();
+            return response()->json([
+                'success' => true,
+                'count' => $enseignants->count(),
+                'enseignants' => $enseignants
+            ]);
+        }
+
+        public function getEtudiants()
+        {
+            $etudiants = Utilisateur::where('role', Utilisateur::ROLE_ETUDIANT)
+            ->select('id', 'nom', 'prenom', 'email', 'groupe_id')
+            ->get();
+            return response()->json([
+                'success' => true,
+                'count' => $etudiants->count(),
+                'etudiants' => $etudiants
+            ]);
+        }
+
+
     /*-----------------------------------------*
      | ACTIONS POUR CHEF DEPARTEMENT           |
      *-----------------------------------------*/

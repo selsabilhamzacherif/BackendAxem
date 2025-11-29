@@ -372,6 +372,47 @@ class Utilisateur extends Authenticatable implements JWTSubject
             return ['success' => true, 'examens_crees' => $examensCree];
         }
 
+        public function getChefsDepartement()
+        {   if (!$this->isResponsable()) return ['success' => false, 'message' => 'Non autorisé'];
+            $chefs = Utilisateur::where('role', Utilisateur::ROLE_CHEF)
+            ->select('id', 'nom', 'prenom', 'email')
+            ->get();
+
+            return response()->json([
+                'success' => true,
+                'count' => $chefs->count(),
+                'chefs' => $chefs
+            ]);
+        }
+
+        public function getEtudiants()
+        {   if (!$this->isResponsable()) return ['success' => false, 'message' => 'Non autorisé'];
+            $etudiants = Utilisateur::where('role', Utilisateur::ROLE_ETUDIANT)
+            ->select('id', 'nom', 'prenom', 'matricule', 'groupe_id')
+            ->get();
+
+            return response()->json([
+                'success' => true,
+                'count' => $etudiants->count(),
+                'etudiants' => $etudiants
+            ]);
+        }
+
+        public function getEnseignants()
+        {   if (!$this->isResponsable()) return ['success' => false, 'message' => 'Non autorisé'];
+            $enseignants = Utilisateur::where('role', Utilisateur::ROLE_ENSEIGNANT)
+            ->select('id', 'nom', 'prenom', 'email')
+            ->get();
+
+            return response()->json([
+                'success' => true,
+                'count' => $enseignants->count(),
+                'enseignants' => $enseignants
+            ]);
+        }
+
+
+
 
 
 

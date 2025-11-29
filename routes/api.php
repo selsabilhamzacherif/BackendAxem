@@ -117,6 +117,12 @@ Route::middleware(['jwt.auth'])->group(function() {
     Route::get('/contraintes/{id}', [ContrainteController::class, 'show'])->name('contraintes.show');     // Afficher une contrainte
     Route::put('/contraintes/{id}', [ContrainteController::class, 'update'])->name('contraintes.update'); // Mettre à jour une contrainte
     Route::delete('/contraintes/{id}', [ContrainteController::class, 'destroy'])->name('contraintes.destroy'); // Supprimer une contrainte
+    /**
+     * liste des chefs departements enseignants et etudiants
+     */
+    Route::get('/chefs', [UtilisateurController::class, 'getChefsDepartement']);
+    Route::get('/enseignants', [UtilisateurController::class, 'getEnseignants']);
+    Route::get('/etudiants', [UtilisateurController::class, 'getEtudiants']);
 
 
     //salle disponibilite
@@ -129,7 +135,7 @@ Route::middleware(['jwt.auth'])->group(function() {
     Route::post('/examens/valider', [ExamenController::class, 'valider']);
     Route::post('/examens/publier', [ExamenController::class, 'publier']);
     Route::post('/logout', [AuthController::class, 'logout']);
-    
+
 
 
 
