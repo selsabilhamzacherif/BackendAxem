@@ -62,20 +62,25 @@ class AuthController extends Controller
             'token' => $token
         ]);
     }
-
-    // Logout
     public function logout()
-{
-    try {
-        JWTAuth::parseToken()->invalidate();
-        return response()->json([
-            'success' => true,
-            'message' => 'Déconnexion réussie'
-        ]);
-    } catch (JWTException $e) {
-        return response()->json(['error' => 'Token invalide ou expiré'], 401);
+    {
+        try {
+            $token = JWTAuth::getToken();
+
+            if (!$token) {
+                return response()->json(['error' => 'Token manquant'], 400);
+            }
+
+            JWTAuth::invalidate($token);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Déconnexion réussie'
+            ]);
+        } catch (\Tymon\JWTAuth\Exceptions\JWTException $e) {
+            return response()->json(['error' => 'Token invalide ou expiré'], 401);
+        }
     }
-}
 
 
 

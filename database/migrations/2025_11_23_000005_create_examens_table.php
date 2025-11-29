@@ -16,8 +16,8 @@ return new class extends Migration
 
             $table->date('date');
             $table->time('heure');
-            $table->string('type'); // contrôle, partiel, final, etc.
-            $table->string('niveau'); // ex : L1, L2, etc.
+            $table->string('type'); // contrôle, ratrappage, final, etc.
+            $table->string('niveau'); //  L1, L2, etc.
 
             // Clés étrangères
             $table->foreignId('module_id')->constrained('modules')->cascadeOnDelete();

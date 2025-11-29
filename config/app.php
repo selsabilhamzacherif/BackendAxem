@@ -122,10 +122,11 @@ return [
         'driver' => env('APP_MAINTENANCE_DRIVER', 'file'),
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
-     'providers' => [
-        /*
-     * Laravel Framework Service Providers...
-     */
+    'providers' => [
+
+    /*
+    * Laravel Framework Service Providers...
+    */
     Illuminate\Auth\AuthServiceProvider::class,
     Illuminate\Broadcasting\BroadcastServiceProvider::class,
     Illuminate\Bus\BusServiceProvider::class,
@@ -150,27 +151,12 @@ return [
     Illuminate\View\ViewServiceProvider::class,
 
     /*
-     * Application Service Providers...
-     */
+    * Application Service Providers...
+    */
     App\Providers\AppServiceProvider::class,
-    App\Providers\AuthServiceProvider::class,   // ✅ IMPORTANT
-    App\Providers\RouteServiceProvider::class,  // ✅ IMPORTANT
-
-      /*
-     * Laravel Framework Service Providers...
-     */
-
+    App\Providers\AuthServiceProvider::class,
+    //App\Providers\EventServiceProvider::class,
+    App\Providers\RouteServiceProvider::class,  
 ],
 
-
-
-
-
-
-
-
-
-
 ];
-
-

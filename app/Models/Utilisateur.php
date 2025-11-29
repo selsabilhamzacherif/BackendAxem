@@ -7,6 +7,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\Models\Salle;
+use Laravel\Sanctum\HasApiTokens;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 //use Illuminate\Foundation\Auth\User as Authenticatable;
 
@@ -25,7 +26,7 @@ class Utilisateur extends Authenticatable implements JWTSubject
     {
         return [];
     }
-    use HasFactory;
+    use /*HasApiTokens*/ HasFactory;
 
     protected $table = 'utilisateurs';
 
@@ -371,7 +372,7 @@ class Utilisateur extends Authenticatable implements JWTSubject
             return ['success' => true, 'examens_crees' => $examensCree];
         }
 
-        
+
 
 
 

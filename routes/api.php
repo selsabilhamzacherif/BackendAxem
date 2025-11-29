@@ -25,7 +25,7 @@ Route::delete('/utilisateurs/{id}', [UtilisateurController::class, 'destroy'])->
 
 // Etudiant
 Route::prefix('etudiant/{id}')->group(function () {
-    Route::get('/planning', [UtilisateurController::class, 'consulterExams']);
+   // Route::get('/planning', [UtilisateurController::class, 'consulterExams']);
     Route::get('/planning/telecharger', [UtilisateurController::class, 'telechargerPlanning']);
     Route::get('/groupe', [UtilisateurController::class, 'consulterGroupe']);
 });
@@ -128,5 +128,8 @@ Route::post('/signup', [AuthController::class, 'signup']);
 // Routes protégées par JWT
 Route::middleware(['jwt.auth'])->group(function() {
     Route::post('/logout', [AuthController::class, 'logout']);
+    Route::get('etudiant/{id}/planning', [UtilisateurController::class, 'consulterExams']);
+
+
 
 });
