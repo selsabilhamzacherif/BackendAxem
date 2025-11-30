@@ -21,6 +21,9 @@ use App\Http\Controllers\AuthController;
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/signup', [AuthController::class, 'signup']);
+Route::post('/password/forgot', [AuthController::class, 'forgotPassword']);
+Route::post('/password/reset', [AuthController::class, 'resetPassword']);
+
 
 // Routes protégées par JWT
 Route::middleware(['jwt.auth'])->group(function() {
@@ -42,7 +45,11 @@ Route::middleware(['jwt.auth'])->group(function() {
         Route::post('/proposer-creneaux', [UtilisateurController::class, 'proposerCreneau']);
         Route::post('/signaler-contrainte', [UtilisateurController::class, 'signalerContrainte']);
         Route::get('/planning', [UtilisateurController::class, 'consulterPlanningEnseignant']);
+        Route::get('/emploi-modules', [UtilisateurController::class, 'consulterEmploiModules']);
+        Route::get('/planningleurModules', [UtilisateurController::class, 'consulterEmploiModules']);
     });
+
+
 
     // Responsable Planification
     Route::prefix('responsable/{id}')->group(function () {

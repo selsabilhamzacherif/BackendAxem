@@ -24,6 +24,7 @@ class ModuleController extends Controller
         $request->validate([
             'nomModule' => 'required|string|max:255',
             'semestre' => 'required|string|max:50',
+            'enseignant_id' => 'required|exists:utilisateurs,id',
         ]);
 
         $module = Module::create($request->all());
@@ -51,6 +52,7 @@ class ModuleController extends Controller
         $request->validate([
             'nomModule' => 'required|string|max:255',
             'semestre' => 'required|string|max:50',
+            'enseignant_id' => 'required|exists:utilisateurs,id',
         ]);
 
         $module = Module::findOrFail($id);

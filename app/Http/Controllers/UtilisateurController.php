@@ -8,6 +8,10 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
+
+
+
+
 class UtilisateurController extends Controller
 {
     /*-----------------------------------------*
@@ -192,6 +196,49 @@ class UtilisateurController extends Controller
         $planning = $user->enseignant_consulterPlanning();
         return response()->json($planning);
     }
+
+
+    public function consulterEmploiModules()
+    {
+        $user = auth('api')->user();
+
+        // Vérification du rôle
+        if ($user->role !== 'enseignant') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Non autorisé'
+            ], 403);
+        }
+
+        // Charger les modules avec examens
+        $modules = $user->modules() // relation enseignant -> modules
+                        ->with(['examens' => function($query) {
+                            $query->orderBy('date')->orderBy('heure');
+                        }])
+                        ->get();
+
+        // Formater les données
+        $result = $modules->map(function ($module) {
+            return [
+                'nomModule' => $module->nomModule,
+                'examens' => $module->examens->map(function ($exam) use ($module) {
+                    return [
+                        'date' => $exam->date,
+                        'heure' => $exam->heure,
+                        'salle' => $exam->salle?->nomSalle,
+                        'module' => $module->nomModule
+                    ];
+                })
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => $result
+        ]);
+    }
+
+
 
 
 

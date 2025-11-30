@@ -8,6 +8,9 @@ use Illuminate\Support\Facades\Hash;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
+
 
 
 /*    /**
@@ -120,33 +123,65 @@ class AuthController extends Controller
             'user' => $nouveau
         ]);
     }
-   /*  public function signupetudiant(Request $request)
+   // Demande de réinitialisation
+    public function forgotPassword(Request $request)
     {
-
         $request->validate([
-            'nom' => 'required|string',
-            'prenom' => 'required|string',
-            'role' => 'required|string',
-            'motDePasse' => 'required|string|min:6',
-            'email' => 'nullable|email|unique:utilisateurs',
-            'matricule' => 'nullable|string|unique:utilisateurs',
-            'specialite' => 'nullable|string',
-            'departement' => 'nullable|string',
-            'groupe_id' => 'nullable|integer',
+            'email' => 'required|email|exists:utilisateurs,email',
         ]);
 
-        $user = auth('api')->user();
-        if ($user->role !== 'responsable_plan') {
-            return response()->json(['error' => 'Non autorisé'], 403);
-        }
+        $user = Utilisateur::where('email', $request->email)->first();
 
-        $data = $request->all();
-        $data['motDePasse'] = Hash::make($data['motDePasse']);
-        $nouveau = Utilisateur::create($data);
+        // Générer un token temporaire
+        $token = Str::random(60);
+
+        $user->reset_token = $token;
+        $user->reset_token_expires = now()->addMinutes(30);
+        $user->save();
+
+        // Envoyer email simple
+        Mail::raw(
+            "Voici votre lien de réinitialisation : https://ton-site.com/reset-password?token=$token\nValable 30 minutes.",
+            function ($message) use ($user) {
+                $message->to($user->email)
+                        ->subject('Réinitialisation de mot de passe');
+            }
+        );
 
         return response()->json([
             'success' => true,
-            'user' => $nouveau
+            'message' => 'Lien de réinitialisation envoyé par email'
         ]);
-    } */
+    }
+
+    // Réinitialisation du mot de passe
+    public function resetPassword(Request $request)
+    {
+        $request->validate([
+            'token' => 'required|string',
+            'password' => 'required|string|min:6|confirmed',
+        ]);
+
+        $user = Utilisateur::where('reset_token', $request->token)
+                           ->where('reset_token_expires', '>', now())
+                           ->first();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Token invalide ou expiré'
+            ], 400);
+        }
+
+        $user->motDePasse = Hash::make($request->password);
+        $user->reset_token = null;
+        $user->reset_token_expires = null;
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Mot de passe réinitialisé avec succès'
+        ]);
+    }
+
 }

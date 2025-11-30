@@ -81,6 +81,11 @@ class Utilisateur extends Authenticatable implements JWTSubject
     {
         return $this->hasMany(Notification::class, 'destinataire_id');
     }
+    public function modules()
+        {
+            // un enseignant a plusieurs modules via la colonne modules.enseignant_id
+            return $this->hasMany(Module::class, 'enseignant_id');
+        }
 
 
     /*-----------------------------------------------*
@@ -251,6 +256,36 @@ class Utilisateur extends Authenticatable implements JWTSubject
                     ];
                 });
         }
+        public function enseignant_consulterExamensModules()
+        {
+            if (!$this->isEnseignant()) return null;
+
+            // récupérer les IDs des modules que l’enseignant enseigne
+            $modulesIds = $this->modulesEnseignant()->pluck('modules.id');
+
+            // récupérer les examens liés à ces modules
+            $examens = Examen::whereIn('module_id', $modulesIds)
+                ->where('statut', 'publié')
+                ->with(['module', 'salle', 'groupe'])
+                ->orderBy('date')
+                ->orderBy('heure')
+                ->get();
+
+            return $examens->map(function ($examen) {
+                return [
+                    'id' => $examen->id,
+                    'date' => $examen->date,
+                    'heure' => $examen->heure,
+                    'type' => $examen->type,
+                    'niveau' => $examen->niveau,
+                    'module' => $examen->module?->nomModule,
+                    'salle' => $examen->salle?->nomSalle,
+                    'groupe' => $examen->groupe?->nomGroupe,
+                    'statut' => $examen->statut,
+                ];
+            });
+        }
+
 
 
 
