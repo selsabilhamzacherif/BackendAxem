@@ -57,8 +57,12 @@ Route::middleware(['jwt.auth'])->group(function() {
         Route::post('/gerer-salles', [UtilisateurController::class, 'gererSalles']);
         Route::post('/planifier', [UtilisateurController::class, 'planifierAutomatiquement']);
         Route::post('/planifier-niveau/{id_groupe}/{niveau}', [UtilisateurController::class, 'planifierNiveauAutomatiquement']);
+        //Route::get('/examens/module/{nomModule}/etudiants', [ExamenController::class, 'getEtudiantsByModuleName']);
+        Route::get('/examens/{id_examen}/etudiants', [ExamenController::class, 'getEtudiantsParExamen']);
+
 
     });
+    // Route::get('/examens/{id}/etudiants', [ExamenController::class, 'getEtudiantsByExamen']);
     //Route::post('responsable/gerer-comptes', [UtilisateurController::class, 'gererComptes']);
 
     // Chef de Département

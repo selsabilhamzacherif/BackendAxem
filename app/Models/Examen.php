@@ -62,6 +62,7 @@ class Examen extends Model
     {
         return $this->belongsToMany(Salle::class, 'salle_examen');
     }*/
+        
 
 
 

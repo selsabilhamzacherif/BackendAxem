@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Examen;
+use App\Http\Controllers\UtilisateurController;
+use App\Models\Module;
 
 class ExamenController extends Controller
 {
@@ -145,4 +147,46 @@ class ExamenController extends Controller
 
         return response()->json(['success' => true, 'data' => $examens]);
     }
+
+
+
+
+public function getEtudiantsParExamen($id)
+{
+    // 1. Récupérer l'examen
+    $examen = Examen::find($id);
+
+    if (!$examen) {
+        return response()->json(['error' => 'Examen introuvable'], 404);
+    }
+
+    // 2. Vérifier le groupe lié
+    $groupe = $examen->groupe;
+    if (!$groupe) {
+        return response()->json(['error' => 'Groupe introuvable pour cet examen'], 404);
+    }
+
+    // 3. Vérifier les étudiants
+    $etudiants = $groupe->etudiants ?? null;
+    if (!$etudiants) {
+        return response()->json(['error' => 'Aucun étudiant trouvé dans ce groupe'], 404);
+    }
+     $etudiants = $etudiants->map(function ($etudiant) {
+        return [
+            'nom'       => $etudiant->nom,
+            'prenom'    => $etudiant->prenom,
+            'matricule' => $etudiant->matricule,
+        ];
+    });
+
+    // 4. Retourner les données
+    return response()->json([
+        'examen_id' => $examen->id,
+        'groupe_id' => $groupe->id,
+        'etudiants' => $etudiants
+    ]);
+}
+
+
+
 }

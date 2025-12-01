@@ -35,7 +35,7 @@ class Utilisateur extends Authenticatable implements JWTSubject
         'specialite', 'departement', 'matricule', 'groupe_id'
     ];
 
-    protected $hidden = ['motDePasse'];
+    protected $hidden = ['motDePasse','reset_token','reset_token_expires'];
 
 
     /*-----------------------------------------------*
