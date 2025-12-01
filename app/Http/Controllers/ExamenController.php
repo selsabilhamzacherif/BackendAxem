@@ -87,6 +87,7 @@ class ExamenController extends Controller
             ], 400);
         }
     }
+    
 
     // Modifier un examen
     public function update(Request $request, $id)

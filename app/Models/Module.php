@@ -13,6 +13,6 @@ class Module extends Model
     }
         public function enseignant()
     {
-        return $this->belongsTo(\App\Models\Utilisateur::class, 'enseignant_id');
+        return $this->belongsTo(Utilisateur::class, 'enseignant_id');
     }
 }

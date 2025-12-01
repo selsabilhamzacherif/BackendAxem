@@ -449,6 +449,31 @@ class Utilisateur extends Authenticatable implements JWTSubject
 
 
 
+        public static function notifierExamenCreePourChef($examen)
+        {
+            $chef = Utilisateur::where('role', Utilisateur::ROLE_CHEF)
+                            ->where('departement', $examen->module->enseignant->departement ?? null)
+                            ->first();
+
+            if ($chef) {
+                $notification = self::create([
+                    'destinataire_id' => $chef->id,
+                    'message' => "Un nouvel examen de {$examen->module->nomModule} est en attente de validation.",
+                    'date' => now(),
+                    'type' => 'alerte',
+                    'metadata' => [
+                        'examen_id' => $examen->id,
+                        'action' => 'validation'
+                    ]
+                ]);
+                $notification->envoyer();
+            }
+        }
+
+
+
+
+
 
 
 
