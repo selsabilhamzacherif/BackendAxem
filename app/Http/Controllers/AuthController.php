@@ -159,7 +159,7 @@ class AuthController extends Controller
     {
         $request->validate([
             'token' => 'required|string',
-            'password' => 'required|string|min:6|confirmed',
+            'motDePasse' => 'required|string|min:6|confirmed',
         ]);
 
         $user = Utilisateur::where('reset_token', $request->token)
@@ -173,7 +173,7 @@ class AuthController extends Controller
             ], 400);
         }
 
-        $user->motDePasse = Hash::make($request->password);
+        $user->motDePasse = Hash::make($request->motDePasse);
         $user->reset_token = null;
         $user->reset_token_expires = null;
         $user->save();
